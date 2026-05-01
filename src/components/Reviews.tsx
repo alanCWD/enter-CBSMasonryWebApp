@@ -163,18 +163,6 @@ const Reviews = () => {
           </button>
         </div>
 
-        <div className="mt-6 text-center">
-          <a
-            href="https://www.google.com/search?q=cbs+masonry+victoria+bc"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            <GoogleIcon />
-            Read all reviews or leave your own
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
       </div>
     </section>
   );
