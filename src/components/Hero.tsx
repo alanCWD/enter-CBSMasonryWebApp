@@ -30,7 +30,7 @@ const Hero = ({ onGetQuote }: HeroProps) => {
         aria-hidden="true"
       >
         <source
-          src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/f9dfcfc0-8f53-4b.mp4"
+          src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/fc0c6fb7-e03e-49.mp4"
           type="video/mp4"
         />
       </video>
