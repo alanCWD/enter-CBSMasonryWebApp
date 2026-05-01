@@ -1,6 +1,9 @@
 import Index from "./pages/Index";
 import AquaPave from "./pages/AquaPave";
+import Login from "./pages/admin/Login";
+import AdminUpload from "./pages/admin/Upload";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export const routers = [
     {
@@ -12,6 +15,16 @@ export const routers = [
       path: "/services/aquapave",
       name: 'aquapave',
       element: <AquaPave />,
+    },
+    {
+      path: "/admin/login",
+      name: 'admin-login',
+      element: <Login />,
+    },
+    {
+      path: "/admin/upload",
+      name: 'admin-upload',
+      element: <ProtectedRoute><AdminUpload /></ProtectedRoute>,
     },
     /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
     {
