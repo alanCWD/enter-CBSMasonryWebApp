@@ -115,7 +115,7 @@ const AquaPave = () => {
             <div className="flex flex-col gap-6">
               <div className="rounded overflow-hidden border border-border shadow-card aspect-video bg-muted">
                 <iframe
-                  src="https://www.youtube.com/embed/videoseries?list=PLAquaPaveCBS"
+                  src="https://www.youtube.com/embed/Wbkli6Gqa0w"
                   title="AquaPave® System — CBS Masonry"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
