@@ -1,13 +1,32 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import TrustBar from "@/components/TrustBar";
+import Services from "@/components/Services";
+import About from "@/components/About";
+import Gallery from "@/components/Gallery";
+import Reviews from "@/components/Reviews";
+import CTABanner from "@/components/CTABanner";
+import Footer from "@/components/Footer";
+import QuoteModal from "@/components/QuoteModal";
 
 const Index = () => {
+  const [quoteOpen, setQuoteOpen] = useState(false);
+
   return (
-    <div className="w-full h-full p-[32px] bg-gradient-to-b from-[#4E54C8] to-[#A8C0FF] flex flex-col max-md:pt-[32px] max-md:pl-[20px] max-md:pr-[20px] max-md:pb-[32px]">
-      <div className="text-[26px] text-white max-md:text-[22px]">Your App Name</div>
-      <div className='h-full flex-1 flex flex-col items-center justify-center'>
-        <div className='text-[48px] text-white text-center max-md:text-[26px]'>Welcome to your blank app</div>
-        <div className='text-[24px] text-white text-center max-md:text-[16px]'>Make any App yours with ease.</div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar onGetQuote={() => setQuoteOpen(true)} />
+      <main>
+        <Hero onGetQuote={() => setQuoteOpen(true)} />
+        <TrustBar />
+        <Services />
+        <About />
+        <Gallery />
+        <Reviews />
+        <CTABanner onGetQuote={() => setQuoteOpen(true)} />
+      </main>
+      <Footer />
+      <QuoteModal open={quoteOpen} onClose={() => setQuoteOpen(false)} />
     </div>
   );
 };
