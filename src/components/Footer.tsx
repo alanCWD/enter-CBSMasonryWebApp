@@ -10,15 +10,9 @@ const GoogleIcon = () => (
 );
 
 const services = [
-  "Chimney Works",
-  "WCB Scaffolding",
-  "Brick Restoration",
-  "Flagstone",
-  "Natural Rock",
-  "Culture Stone",
-  "Paving Stone",
-  "AquaPave",
-  "Excavation",
+  "Chimney Works", "WCB Scaffolding", "Brick Restoration",
+  "Flagstone", "Natural Rock", "Culture Stone",
+  "Paving Stone", "AquaPave", "Excavation",
 ];
 
 const hours = [
@@ -35,8 +29,8 @@ const social = [
 ];
 
 const Footer = () => (
-  <footer id="footer" className="bg-[hsl(222_47%_5%)] border-t border-border">
-    <div className="container mx-auto px-4 md:px-8 max-w-[1280px] py-16">
+  <footer className="bg-[hsl(222,40%,10%)] border-t border-white/10">
+    <div className="mx-auto px-6 md:px-10 max-w-[1280px] py-14">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
         {/* Brand */}
@@ -46,18 +40,11 @@ const Footer = () => (
               src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/9cc16a08-504a-4d.png"
               alt="CBS Masonry Ltd."
               crossOrigin="anonymous"
-              className="h-12 w-auto object-contain"
+              className="h-10 w-auto object-contain"
             />
-            <div>
-              <div className="text-sm font-bold text-foreground">CBS Masonry Ltd.</div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.10em] text-primary">
-                Quality is our Guarantee
-              </div>
-            </div>
           </div>
-          <p className="text-[13px] text-muted-foreground leading-relaxed mb-5 max-w-[260px]">
-            Premier bricklaying and stone masonry company serving Victoria, BC with
-            175+ combined years of experience.
+          <p className="text-[13px] text-white/50 leading-relaxed mb-5 max-w-[240px]">
+            Premier bricklaying and stone masonry serving Victoria, BC — 175+ combined years of experience.
           </p>
           <div className="flex gap-2">
             {social.map(({ icon: Icon, href, label }) => (
@@ -65,9 +52,9 @@ const Footer = () => (
                 key={label}
                 href={href}
                 aria-label={label}
-                className="w-9 h-9 flex items-center justify-center rounded border border-border text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/10 transition-all duration-150"
+                className="w-8 h-8 flex items-center justify-center rounded border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all"
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5" />
               </a>
             ))}
           </div>
@@ -75,21 +62,17 @@ const Footer = () => (
 
         {/* Services */}
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary mb-4">
-            Masonry Services
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/40 mb-4">
+            Services
           </h3>
           <ul className="space-y-2">
             {services.map((svc) => (
               <li key={svc}>
                 <a
                   href="#services"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.querySelector("#services")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-foreground transition-colors duration-100 group"
+                  onClick={(e) => { e.preventDefault(); document.querySelector("#services")?.scrollIntoView({ behavior: "smooth" }); }}
+                  className="text-[13px] text-white/50 hover:text-white transition-colors"
                 >
-                  <span className="w-1 h-1 rounded-full bg-border group-hover:bg-primary transition-colors flex-shrink-0" />
                   {svc}
                 </a>
               </li>
@@ -99,46 +82,31 @@ const Footer = () => (
 
         {/* Contact */}
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary mb-4">
-            Office Location
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/40 mb-4">
+            Office
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex gap-2">
               <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">Address</div>
-                <div className="text-[13px] text-muted-foreground">
-                  1008 Braeburn Ave<br />
-                  Victoria, BC V9C 0H8
-                </div>
+              <div className="text-[13px] text-white/50">
+                1008 Braeburn Ave<br />Victoria, BC V9C 0H8
               </div>
             </div>
             <div className="flex gap-2">
               <Phone className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-0.5">Phone</div>
-                <a
-                  href="tel:2502949942"
-                  className="text-[13px] text-muted-foreground hover:text-primary transition-colors"
-                >
-                  250-294-9942
-                </a>
-              </div>
+              <a href="tel:2502949942" className="text-[13px] text-white/50 hover:text-white transition-colors">
+                250-294-9942
+              </a>
             </div>
             <div className="flex gap-2">
               <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Office Hours</div>
-                <div className="space-y-1">
-                  {hours.map(({ day, time, open }) => (
-                    <div key={day} className="flex justify-between gap-4 text-[12px]">
-                      <span className="text-muted-foreground">{day}</span>
-                      <span className={open ? "text-primary font-medium" : "text-muted-foreground/60"}>
-                        {time}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-1">
+                {hours.map(({ day, time, open }) => (
+                  <div key={day} className="flex gap-4 text-[12px]">
+                    <span className="text-white/40">{day}</span>
+                    <span className={open ? "text-primary" : "text-white/30"}>{time}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -146,15 +114,15 @@ const Footer = () => (
 
         {/* Reviews */}
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary mb-4">
-            Read Our Reviews
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/40 mb-4">
+            Reviews
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <a
               href="https://www.google.com/search?q=cbs+masonry+victoria+bc"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2.5 rounded border border-border bg-card/50 text-[12px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-150"
+              className="flex items-center gap-2 px-3 py-2.5 rounded border border-white/10 text-[12px] text-white/50 hover:text-white hover:border-white/20 transition-all"
             >
               <GoogleIcon />
               Google Reviews
@@ -162,33 +130,23 @@ const Footer = () => (
             </a>
             <a
               href="#"
-              className="flex items-center gap-2 px-3 py-2.5 rounded border border-border bg-card/50 text-[12px] font-semibold text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-150"
+              className="flex items-center gap-2 px-3 py-2.5 rounded border border-white/10 text-[12px] text-white/50 hover:text-white hover:border-white/20 transition-all"
             >
               <Facebook className="w-4 h-4 text-[#1877F2]" />
               Facebook Reviews
               <span className="ml-auto text-yellow-400 text-xs">★★★★★</span>
             </a>
           </div>
-
-          <div className="mt-5 p-3 rounded border border-primary/15 bg-primary/5">
-            <p className="text-[11px] text-muted-foreground italic">
-              "Quality is our Guarantee!"
-            </p>
-            <p className="text-[11px] font-semibold text-primary mt-1">
-              — CBS Masonry Ltd.
-            </p>
-          </div>
         </div>
       </div>
     </div>
 
-    {/* Bottom bar */}
-    <div className="border-t border-border py-4">
-      <div className="container mx-auto px-4 md:px-8 max-w-[1280px] flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-muted-foreground/50">
+    <div className="border-t border-white/8 py-4">
+      <div className="mx-auto px-6 md:px-10 max-w-[1280px] flex flex-col sm:flex-row items-center justify-between gap-2 text-[12px] text-white/25">
         <span>© CBS Masonry Ltd. 2025 — All Rights Reserved.</span>
         <div className="flex gap-4">
-          <a href="#" className="hover:text-muted-foreground transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-muted-foreground transition-colors">Terms of Service</a>
+          <a href="#" className="hover:text-white/40 transition-colors">Privacy</a>
+          <a href="#" className="hover:text-white/40 transition-colors">Terms</a>
         </div>
       </div>
     </div>

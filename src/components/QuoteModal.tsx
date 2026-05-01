@@ -58,7 +58,7 @@ const QuoteModal = ({ open, onClose }: QuoteModalProps) => {
       className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${
         open ? "opacity-100 visible" : "opacity-0 invisible"
       }`}
-      style={{ background: "hsl(222 47% 5% / 0.90)" }}
+      style={{ background: "rgba(0,0,0,0.55)" }}
       onClick={onClose}
     >
       <div

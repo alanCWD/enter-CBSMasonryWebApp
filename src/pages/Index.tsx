@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import TrustBar from "@/components/TrustBar";
 import Services from "@/components/Services";
 import About from "@/components/About";
 import Gallery from "@/components/Gallery";
@@ -18,7 +17,6 @@ const Index = () => {
       <Navbar onGetQuote={() => setQuoteOpen(true)} />
       <main>
         <Hero onGetQuote={() => setQuoteOpen(true)} />
-        <TrustBar />
         <Services />
         <About />
         <Gallery />

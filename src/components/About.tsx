@@ -1,56 +1,23 @@
-import { Award, Shield, Users, Trophy } from "lucide-react";
-
-const awards = [
-  {
-    icon: Trophy,
-    title: "BBB Torch Award",
-    desc: "Winner 2023, 2022, 2016, 2015 & 2013 – Customer Service Excellence",
-  },
-  {
-    icon: Shield,
-    title: "BBB A+ Rating",
-    desc: "Accredited by the Better Business Bureau of Victoria",
-  },
-  {
-    icon: Award,
-    title: "Top Sponsor",
-    desc: "Proud TOP SPONSOR of the BBB Annual Torch Awards Gala",
-  },
-  {
-    icon: Users,
-    title: "Community First",
-    desc: "Proud sponsor of Pacific FC — Canadian Premier League",
-  },
-];
+import { Trophy, Shield } from "lucide-react";
 
 const About = () => (
-  <section id="about" className="py-24 bg-card relative overflow-hidden">
-    {/* Background glow */}
-    <div
-      className="absolute top-0 right-0 w-[500px] h-[500px] pointer-events-none"
-      style={{
-        background: "radial-gradient(circle, hsl(201 97% 32% / 0.12) 0%, transparent 70%)",
-        transform: "translate(30%, -30%)",
-      }}
-      aria-hidden="true"
-    />
+  <section id="about" className="py-20 bg-card">
+    <div className="mx-auto px-6 md:px-10 max-w-[1280px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
 
-    <div className="container mx-auto px-4 md:px-8 max-w-[1280px] relative z-10">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        {/* Visual */}
+        {/* Image */}
         <div className="relative hidden lg:block">
-          <div className="rounded-xl overflow-hidden border border-border aspect-[4/3]">
+          <div className="rounded overflow-hidden border border-border aspect-[4/3] shadow-card">
             <img
               src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80"
-              alt="CBS Masonry craftsmen at work on a commercial project"
+              alt="CBS Masonry craftsmen at work"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
           </div>
-          {/* Badge */}
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-gradient-to-br from-[hsl(var(--color-primary-900))] to-background border border-primary/25 flex flex-col items-center justify-center shadow-card z-10">
-            <span className="text-3xl font-extrabold text-primary leading-none">175+</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center leading-tight mt-1">
+          {/* Years badge */}
+          <div className="absolute -bottom-5 -right-5 w-28 h-28 rounded-full bg-primary flex flex-col items-center justify-center shadow-elevated z-10">
+            <span className="text-2xl font-extrabold text-primary-foreground leading-none">175+</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-primary-foreground/80 text-center leading-tight mt-1">
               Combined<br />Years
             </span>
           </div>
@@ -58,15 +25,12 @@ const About = () => (
 
         {/* Content */}
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary mb-2">
-            About Us
-          </p>
-          <h2 className="text-[clamp(24px,3vw,34px)] font-bold text-foreground mb-3">
+          <h2 className="text-[clamp(22px,3vw,32px)] font-bold text-foreground mb-3">
             Victoria's Residential &amp; Commercial Masonry Specialists
           </h2>
-          <div className="w-12 h-[3px] rounded-full bg-gradient-to-r from-primary to-[hsl(var(--color-primary-900))] mb-6" />
+          <div className="w-10 h-[3px] rounded-full bg-primary mb-6" />
 
-          <div className="space-y-4 text-muted-foreground text-base leading-relaxed mb-8">
+          <div className="space-y-4 text-muted-foreground text-[15px] leading-relaxed mb-8">
             <p>
               With more than 175 combined years of experience, CBS Masonry is a premier
               bricklaying and stone masonry company. Family owned and headquartered in
@@ -76,37 +40,27 @@ const About = () => (
               throughout the Victoria area.
             </p>
             <p>
-              From repair, rebuild, renew or replacing of chimney stacks or restoration
-              works to natural stone patios, sidewalks or pathways, our professional team
-              has the expertise to get the job done right. Whether your project is big or
-              small, you expect the same high safety, quality and production standards.
-            </p>
-            <p>
-              CBS Masonry is recognized by the BBB of Victoria, and was the winner of
-              the 2023, 2022, 2016, 2015 &amp; 2013 Torch Award.
+              From chimney repair and restoration to natural stone patios, sidewalks
+              and pathways, our team has the expertise to get the job done right —
+              whether your project is large or small.
             </p>
           </div>
 
-          {/* Awards grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {awards.map((award) => (
-              <div
-                key={award.title}
-                className="flex gap-3 p-4 rounded bg-primary/5 border border-primary/14"
-              >
-                <div className="w-9 h-9 flex-shrink-0 rounded bg-primary/12 flex items-center justify-center">
-                  <award.icon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-[13px] font-bold text-foreground mb-0.5">
-                    {award.title}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground leading-snug">
-                    {award.desc}
-                  </div>
-                </div>
+            <div className="flex gap-3 p-4 rounded border border-border bg-background">
+              <Trophy className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="text-[13px] font-semibold text-foreground mb-0.5">BBB Torch Award</div>
+                <div className="text-[12px] text-muted-foreground">Winner 2023, 2022, 2016, 2015 &amp; 2013</div>
               </div>
-            ))}
+            </div>
+            <div className="flex gap-3 p-4 rounded border border-border bg-background">
+              <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="text-[13px] font-semibold text-foreground mb-0.5">BBB A+ Rating</div>
+                <div className="text-[12px] text-muted-foreground">Accredited by the BBB of Victoria</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

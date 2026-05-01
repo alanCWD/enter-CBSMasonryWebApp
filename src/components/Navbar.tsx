@@ -10,7 +10,7 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -24,20 +24,22 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
 
   const handleNav = (href: string) => {
     setMobileOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const isLight = scrolled || mobileOpen;
 
   return (
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 h-[72px] transition-all duration-300 ${
-          scrolled
-            ? "bg-[hsl(222_47%_7%/0.98)] shadow-[0_4px_24px_hsl(222_47%_7%/0.6)]"
-            : "bg-[hsl(222_47%_7%/0.88)] backdrop-blur-md"
-        } border-b border-border`}
+          isLight
+            ? "bg-white shadow-sm border-b border-border"
+            : "bg-transparent"
+        }`}
       >
-        <div className="container mx-auto h-full flex items-center justify-between gap-6 px-4 md:px-8 max-w-[1280px]">
+        <div className="mx-auto h-full flex items-center justify-between gap-6 px-6 md:px-10 max-w-[1280px]">
+
           {/* Logo */}
           <a
             href="#"
@@ -48,23 +50,29 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
               src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/9cc16a08-504a-4d.png"
               alt="CBS Masonry Ltd."
               crossOrigin="anonymous"
-              className="h-12 w-auto object-contain"
+              className="h-11 w-auto object-contain"
             />
             <div className="hidden sm:flex flex-col leading-none">
-              <span className="text-[15px] font-bold text-foreground tracking-tight">CBS Masonry Ltd.</span>
-              <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary mt-0.5">
+              <span className={`text-[14px] font-bold tracking-tight transition-colors ${isLight ? "text-foreground" : "text-white"}`}>
+                CBS Masonry Ltd.
+              </span>
+              <span className="text-[9px] font-semibold tracking-[0.14em] uppercase text-primary mt-0.5">
                 Quality is our Guarantee
               </span>
             </div>
           </a>
 
-          {/* Desktop Nav Links */}
+          {/* Desktop nav links */}
           <ul className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
               <li key={link.href}>
                 <button
                   onClick={() => handleNav(link.href)}
-                  className="px-4 py-2 text-sm font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-all duration-150"
+                  className={`px-4 py-2 text-sm font-medium tracking-wide rounded transition-all duration-150 ${
+                    isLight
+                      ? "text-foreground/70 hover:text-foreground hover:bg-muted"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  }`}
                 >
                   {link.label}
                 </button>
@@ -72,37 +80,43 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
             ))}
           </ul>
 
-          {/* Right Side */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Right */}
+          <div className="hidden md:flex items-center gap-5">
             <a
               href="tel:2502949942"
-              className="flex items-center gap-1.5 text-sm font-bold text-foreground hover:text-primary transition-colors duration-150"
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${
+                isLight ? "text-foreground hover:text-primary" : "text-white hover:text-primary"
+              }`}
             >
-              <Phone className="w-4 h-4 text-primary" />
+              <Phone className="w-3.5 h-3.5 text-primary" />
               250-294-9942
             </a>
             <button
               onClick={onGetQuote}
-              className="px-5 py-2.5 bg-primary text-primary-foreground text-sm font-bold tracking-wide uppercase rounded hover:bg-transparent hover:text-primary border-2 border-primary transition-all duration-150 hover:shadow-glow"
+              className="px-5 py-2 bg-primary text-primary-foreground text-sm font-bold tracking-wide uppercase rounded-sm border-2 border-primary hover:bg-transparent hover:text-primary transition-all duration-150"
             >
               Get a Quote
             </button>
           </div>
 
-          {/* Mobile Hamburger */}
+          {/* Hamburger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary transition-all"
+            className={`lg:hidden flex items-center justify-center w-9 h-9 rounded transition-all ${
+              isLight
+                ? "text-foreground border border-border hover:bg-muted"
+                : "text-white border border-white/30 hover:bg-white/10"
+            }`}
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       <div
-        className={`fixed inset-0 z-40 bg-[hsl(222_47%_5%/0.98)] backdrop-blur-xl flex flex-col items-center justify-center gap-6 transition-all duration-300 ${
+        className={`fixed inset-0 z-40 bg-white flex flex-col items-center justify-center gap-7 transition-all duration-300 ${
           mobileOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         style={{ top: "72px" }}
@@ -118,15 +132,15 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
         ))}
         <button
           onClick={() => { setMobileOpen(false); onGetQuote(); }}
-          className="mt-4 px-10 py-4 bg-primary text-primary-foreground text-lg font-bold uppercase rounded tracking-wide"
+          className="mt-2 px-10 py-3.5 bg-primary text-primary-foreground text-base font-bold uppercase tracking-wide rounded-sm"
         >
           Get a Quote
         </button>
         <a
           href="tel:2502949942"
-          className="flex items-center gap-2 text-lg font-bold text-primary mt-2"
+          className="flex items-center gap-2 text-base font-semibold text-primary"
         >
-          <Phone className="w-5 h-5" />
+          <Phone className="w-4 h-4" />
           250-294-9942
         </a>
       </div>
