@@ -34,10 +34,10 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           mobileOpen
-            ? "bg-white h-[72px]"
+            ? "bg-white h-[80px]"
             : scrolled
-            ? "bg-white shadow-sm border-b border-border h-[72px]"
-            : "bg-white/20 backdrop-blur-sm h-[96px]"
+            ? "bg-white shadow-sm border-b border-border h-[100px]"
+            : "bg-white/20 backdrop-blur-sm h-[176px]"
         }`}
       >
         <div className="mx-auto h-full flex items-center justify-between gap-6 px-6 md:px-10 max-w-[1280px]">
@@ -53,7 +53,7 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
               alt="CBS Masonry Ltd."
               crossOrigin="anonymous"
               className={`w-auto object-contain transition-all duration-300 ${
-                scrolled ? "h-[56px]" : "h-[80px]"
+                scrolled ? "h-[84px]" : "h-[152px]"
               }`}
             />
           </a>
