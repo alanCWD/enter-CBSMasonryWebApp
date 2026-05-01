@@ -32,34 +32,30 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 h-[72px] transition-all duration-300 ${
-          isLight
-            ? "bg-white shadow-sm border-b border-border"
-            : "bg-transparent"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          mobileOpen
+            ? "bg-white h-[72px]"
+            : scrolled
+            ? "bg-white shadow-sm border-b border-border h-[72px]"
+            : "bg-white/20 backdrop-blur-sm h-[96px]"
         }`}
       >
         <div className="mx-auto h-full flex items-center justify-between gap-6 px-6 md:px-10 max-w-[1280px]">
 
-          {/* Logo */}
+          {/* Logo only — no text beside it */}
           <a
             href="#"
-            className="flex items-center gap-3 flex-shrink-0"
+            className="flex items-center flex-shrink-0"
             onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
           >
             <img
               src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/9cc16a08-504a-4d.png"
               alt="CBS Masonry Ltd."
               crossOrigin="anonymous"
-              className="h-11 w-auto object-contain"
+              className={`w-auto object-contain transition-all duration-300 ${
+                scrolled ? "h-[56px]" : "h-[80px]"
+              }`}
             />
-            <div className="hidden sm:flex flex-col leading-none">
-              <span className={`text-[14px] font-bold tracking-tight transition-colors ${isLight ? "text-foreground" : "text-white"}`}>
-                CBS Masonry Ltd.
-              </span>
-              <span className="text-[9px] font-semibold tracking-[0.14em] uppercase text-primary mt-0.5">
-                Quality is our Guarantee
-              </span>
-            </div>
           </a>
 
           {/* Desktop nav links */}
@@ -71,7 +67,7 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
                   className={`px-4 py-2 text-sm font-medium tracking-wide rounded transition-all duration-150 ${
                     isLight
                       ? "text-foreground/70 hover:text-foreground hover:bg-muted"
-                      : "text-white/80 hover:text-white hover:bg-white/10"
+                      : "text-white/90 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {link.label}
@@ -93,7 +89,11 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
             </a>
             <button
               onClick={onGetQuote}
-              className="px-5 py-2 bg-primary text-primary-foreground text-sm font-bold tracking-wide uppercase rounded-sm border-2 border-primary hover:bg-transparent hover:text-primary transition-all duration-150"
+              className={`px-5 py-2 text-sm font-bold tracking-wide uppercase rounded-sm border-2 border-primary transition-all duration-150 ${
+                isLight
+                  ? "bg-primary text-primary-foreground hover:bg-transparent hover:text-primary"
+                  : "bg-primary text-primary-foreground hover:bg-transparent hover:text-white"
+              }`}
             >
               Get a Quote
             </button>
@@ -105,7 +105,7 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
             className={`lg:hidden flex items-center justify-center w-9 h-9 rounded transition-all ${
               isLight
                 ? "text-foreground border border-border hover:bg-muted"
-                : "text-white border border-white/30 hover:bg-white/10"
+                : "text-white border border-white/40 hover:bg-white/10"
             }`}
             aria-label="Toggle menu"
           >
