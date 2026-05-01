@@ -3,15 +3,15 @@ import { ExternalLink } from "lucide-react";
 const BBBSection = () => (
   <section className="py-20 bg-[hsl(210,20%,95%)] border-y border-border">
     <div className="mx-auto px-6 md:px-10 max-w-[1280px]">
-      <div className="flex flex-col lg:flex-row items-stretch gap-12">
+      <div className="flex flex-col lg:flex-row items-start gap-16">
 
         {/* BBB Badge Image */}
-        <div className="flex-shrink-0 flex items-center justify-center">
+        <div className="flex-shrink-0 flex items-start justify-center pt-1 px-6">
           <img
             src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/b13c2a26-f2f6-49.png"
             alt="BBB Torch Awards for Ethics – 2023, 2022, 2015 & 2013 Winner"
             crossOrigin="anonymous"
-            className="w-[340px] h-full object-contain"
+            className="w-[360px] h-auto object-contain"
           />
         </div>
 
