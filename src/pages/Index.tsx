@@ -6,6 +6,7 @@ import About from "@/components/About";
 import Gallery from "@/components/Gallery";
 import Reviews from "@/components/Reviews";
 import CTABanner from "@/components/CTABanner";
+import BBBSection from "@/components/BBBSection";
 import Footer from "@/components/Footer";
 import QuoteModal from "@/components/QuoteModal";
 
@@ -23,6 +24,7 @@ const Index = () => {
         <Reviews />
         <CTABanner onGetQuote={() => setQuoteOpen(true)} />
       </main>
+      <BBBSection />
       <Footer />
       <QuoteModal open={quoteOpen} onClose={() => setQuoteOpen(false)} />
     </div>
