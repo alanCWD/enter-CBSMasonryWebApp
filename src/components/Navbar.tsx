@@ -3,9 +3,10 @@ import { Phone, Menu, X } from "lucide-react";
 
 interface NavbarProps {
   onGetQuote: () => void;
+  isInnerPage?: boolean;
 }
 
-const Navbar = ({ onGetQuote }: NavbarProps) => {
+const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -24,7 +25,11 @@ const Navbar = ({ onGetQuote }: NavbarProps) => {
 
   const handleNav = (href: string) => {
     setMobileOpen(false);
-    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    if (isInnerPage) {
+      window.location.href = "/" + href;
+    } else {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const isLight = scrolled || mobileOpen;

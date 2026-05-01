@@ -10,9 +10,15 @@ const GoogleIcon = () => (
 );
 
 const services = [
-  "Chimney Works", "WCB Scaffolding", "Brick Restoration",
-  "Flagstone", "Natural Rock", "Culture Stone",
-  "Paving Stone", "AquaPave", "Excavation",
+  { label: "Chimney Works", href: "#services" },
+  { label: "WCB Scaffolding", href: "#services" },
+  { label: "Brick Restoration", href: "#services" },
+  { label: "Flagstone", href: "#services" },
+  { label: "Natural Rock", href: "#services" },
+  { label: "Culture Stone", href: "#services" },
+  { label: "Paving Stone", href: "#services" },
+  { label: "AquaPave", href: "/services/aquapave" },
+  { label: "Excavation", href: "#services" },
 ];
 
 const hours = [
@@ -67,13 +73,13 @@ const Footer = () => (
           </h3>
           <ul className="space-y-2">
             {services.map((svc) => (
-              <li key={svc}>
+              <li key={svc.label}>
                 <a
-                  href="#services"
-                  onClick={(e) => { e.preventDefault(); document.querySelector("#services")?.scrollIntoView({ behavior: "smooth" }); }}
+                  href={svc.href}
+                  onClick={svc.href.startsWith("#") ? (e) => { e.preventDefault(); document.querySelector(svc.href)?.scrollIntoView({ behavior: "smooth" }); } : undefined}
                   className="text-[13px] text-white/50 hover:text-white transition-colors"
                 >
-                  {svc}
+                  {svc.label}
                 </a>
               </li>
             ))}
