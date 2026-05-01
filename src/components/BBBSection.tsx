@@ -16,7 +16,7 @@ const BBBSection = () => (
         </div>
 
         {/* Content */}
-        <div className="flex-1 text-center lg:text-left">
+        <div className="flex-1 text-center lg:text-left pt-10">
           <h2 className="text-[clamp(22px,3vw,34px)] font-bold text-foreground mb-4 leading-tight">
             Help Nominate CBS Masonry Ltd. for this year's BBB Torch Awards!
           </h2>
