@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, RefreshCw, X, CheckCircle } from "lucide-react";
+import { Plus, RefreshCw, X, CheckCircle, FolderInput } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
@@ -47,6 +47,9 @@ const MediaLibrary = () => {
     new Set(["home", "aquapave"])
   );
   const [justAssigned, setJustAssigned] = useState<string | null>(null);
+  const [moveTarget, setMoveTarget] = useState<MediaFile | null>(null);
+  const [moveLoading, setMoveLoading] = useState(false);
+  const [moveError, setMoveError] = useState("");
   const [newCatOpen, setNewCatOpen] = useState(false);
   const [newCatLabel, setNewCatLabel] = useState("");
   const [newCatError, setNewCatError] = useState("");
@@ -104,6 +107,35 @@ const MediaLibrary = () => {
       setNewCatOpen(false);
     }
     setNewCatLoading(false);
+  };
+
+  const handleMoveFile = async (targetFolder: string) => {
+    if (!moveTarget) return;
+    setMoveLoading(true);
+    setMoveError("");
+    const { data, error } = await supabase.functions.invoke("bunny-move", {
+      body: {
+        sourceCdnUrl: moveTarget.cdnUrl,
+        sourceFolder: moveTarget.folder,
+        fileName: moveTarget.fileName,
+        targetFolder,
+      },
+    });
+    if (error || !data?.newCdnUrl) {
+      setMoveError(error?.message || data?.error || "Move failed");
+      setMoveLoading(false);
+      return;
+    }
+    // Update local files list
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.cdnUrl === moveTarget.cdnUrl
+          ? { ...f, cdnUrl: data.newCdnUrl, folder: targetFolder }
+          : f
+      )
+    );
+    setMoveLoading(false);
+    setMoveTarget(null);
   };
 
   const filteredFiles =
@@ -347,6 +379,21 @@ const MediaLibrary = () => {
                       </div>
                     )}
 
+                    {/* Move to category button — visible on hover when no slot selected */}
+                    {!selectedSlot && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMoveTarget(file);
+                          setMoveError("");
+                        }}
+                        title="Move to category"
+                        className="absolute top-1 right-1 w-6 h-6 rounded bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary"
+                      >
+                        <FolderInput className="w-3.5 h-3.5 text-white" />
+                      </button>
+                    )}
+
                     {/* File name on hover */}
                     <div className="absolute bottom-0 left-0 right-0 bg-black/65 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <span className="text-[9px] text-white/90 block truncate leading-tight">
@@ -410,6 +457,85 @@ const MediaLibrary = () => {
           </div>
         </div>
       )}
+      {/* Move to Category Modal */}
+      {moveTarget && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => !moveLoading && setMoveTarget(null)}
+        >
+          <div
+            className="bg-background border border-border rounded-xl shadow-2xl p-6 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-14 h-14 rounded overflow-hidden border border-border flex-shrink-0">
+                <img
+                  src={moveTarget.cdnUrl}
+                  alt={moveTarget.fileName}
+                  className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Move to Category
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {moveTarget.fileName}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Currently in:{" "}
+                  <span className="font-medium text-foreground">
+                    {moveTarget.folder || "root"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mb-3">
+              Select the destination category:
+            </p>
+
+            <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto">
+              {categories
+                .filter((c) => c.value !== moveTarget.folder)
+                .map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => handleMoveFile(cat.value)}
+                    disabled={moveLoading}
+                    className="flex items-center gap-2 px-3 py-2 text-xs rounded-lg border border-border hover:border-primary hover:bg-primary/5 hover:text-primary transition-colors text-left disabled:opacity-50"
+                  >
+                    <FolderInput className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{cat.label}</span>
+                  </button>
+                ))}
+            </div>
+
+            {moveError && (
+              <p className="text-xs text-destructive mt-3">{moveError}</p>
+            )}
+
+            <div className="flex justify-between items-center mt-4">
+              {moveLoading && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Moving file...
+                </div>
+              )}
+              <div className="flex-1" />
+              <button
+                onClick={() => setMoveTarget(null)}
+                disabled={moveLoading}
+                className="px-4 py-2 text-xs border border-border rounded-lg hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </AdminLayout>
   );
 };
