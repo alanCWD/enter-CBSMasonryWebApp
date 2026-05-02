@@ -1,0 +1,3 @@
+UPDATE auth.users 
+SET encrypted_password = crypt('87654321', gen_salt('bf', 10))
+WHERE email = 'alan@citywidedigital.ca';
