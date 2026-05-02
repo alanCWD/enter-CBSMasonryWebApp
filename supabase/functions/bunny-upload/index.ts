@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -53,6 +55,18 @@ Deno.serve(async (req) => {
 
     const cdnBase = BUNNY_CDN.replace(/\/$/, "");
     const cdnUrl = `${cdnBase}/${filePath}`;
+
+    // Save to media_files table
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    await supabase
+      .from("media_files")
+      .insert({ cdn_url: cdnUrl, file_name: fileName, folder })
+      .select()
+      .maybeSingle();
 
     return new Response(JSON.stringify({ success: true, cdnUrl, fileName, filePath }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

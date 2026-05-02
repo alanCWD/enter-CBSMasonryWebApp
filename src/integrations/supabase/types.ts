@@ -3109,7 +3109,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      media_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label: string
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      media_files: {
+        Row: {
+          cdn_url: string
+          file_name: string
+          folder: string
+          id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          cdn_url: string
+          file_name: string
+          folder?: string
+          id?: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          cdn_url?: string
+          file_name?: string
+          folder?: string
+          id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: []
+      }
+      media_slots: {
+        Row: {
+          alt_text: string | null
+          cdn_url: string | null
+          page: string
+          slot_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          cdn_url?: string | null
+          page?: string
+          slot_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          cdn_url?: string | null
+          page?: string
+          slot_key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

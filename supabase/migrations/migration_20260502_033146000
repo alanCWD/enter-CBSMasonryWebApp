@@ -1,0 +1,47 @@
+-- media_categories
+CREATE TABLE media_categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  value text UNIQUE NOT NULL,
+  label text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE media_categories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_categories" ON media_categories FOR SELECT USING (true);
+CREATE POLICY "auth_insert_categories" ON media_categories FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+INSERT INTO media_categories (value, label) VALUES
+  ('aquapave', 'AquaPave'),
+  ('residential', 'Residential'),
+  ('commercial', 'Commercial'),
+  ('chimney', 'Chimney Works'),
+  ('brick-restoration', 'Brick Restoration'),
+  ('flagstone', 'Flagstone'),
+  ('natural-rock', 'Natural Rock'),
+  ('culture-stone', 'Culture Stone'),
+  ('paving-stone', 'Paving Stone'),
+  ('excavation', 'Excavation'),
+  ('gallery', 'Gallery / General');
+
+-- media_files
+CREATE TABLE media_files (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  cdn_url text UNIQUE NOT NULL,
+  file_name text NOT NULL,
+  folder text NOT NULL DEFAULT '',
+  uploaded_at timestamptz DEFAULT now()
+);
+ALTER TABLE media_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "auth_read_files" ON media_files FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_insert_files" ON media_files FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- media_slots
+CREATE TABLE media_slots (
+  slot_key text PRIMARY KEY,
+  cdn_url text,
+  alt_text text,
+  page text NOT NULL DEFAULT '',
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE media_slots ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_slots" ON media_slots FOR SELECT USING (true);
+CREATE POLICY "auth_write_slots" ON media_slots FOR ALL USING (auth.role() = 'authenticated');
