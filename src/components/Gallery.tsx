@@ -1,7 +1,8 @@
 import { ZoomIn, X } from "lucide-react";
 import { useState } from "react";
+import { useMediaSlots } from "@/hooks/useMediaSlots";
 
-const galleryItems = [
+const galleryDefaults = [
   { src: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80", alt: "Stone retaining wall", label: "Retaining Wall", tall: true },
   { src: "https://images.unsplash.com/photo-1509660933844-6910e12765a0?w=600&q=80", alt: "Brick chimney", label: "Chimney Restoration", tall: false },
   { src: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80", alt: "Stone patio", label: "Stone Patio", tall: false },
@@ -18,6 +19,12 @@ const galleryItems = [
 
 const Gallery = () => {
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const { slots } = useMediaSlots();
+
+  const galleryItems = galleryDefaults.map((item, i) => ({
+    ...item,
+    src: slots[`home-gallery-${i + 1}`] ?? item.src,
+  }));
 
   return (
     <section id="gallery" className="py-20 bg-background">

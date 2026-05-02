@@ -1,25 +1,11 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Upload, LogOut, X, Copy, Check, CheckCircle,
+  Upload, X, Copy, Check, CheckCircle,
   AlertCircle, ImagePlus, Folder
 } from "lucide-react";
-
-const CATEGORIES = [
-  { value: "aquapave", label: "AquaPave" },
-  { value: "residential", label: "Residential" },
-  { value: "commercial", label: "Commercial" },
-  { value: "chimney", label: "Chimney Works" },
-  { value: "brick-restoration", label: "Brick Restoration" },
-  { value: "flagstone", label: "Flagstone" },
-  { value: "natural-rock", label: "Natural Rock" },
-  { value: "culture-stone", label: "Culture Stone" },
-  { value: "paving-stone", label: "Paving Stone" },
-  { value: "excavation", label: "Excavation" },
-  { value: "gallery", label: "Gallery / General" },
-];
+import AdminLayout from "@/components/admin/AdminLayout";
+import { useCategories } from "@/hooks/useCategories";
 
 type FileStatus = "pending" | "uploading" | "done" | "error";
 
@@ -48,8 +34,7 @@ const suggestName = (file: File, category: string, index: number) => {
 };
 
 const AdminUpload = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { categories, loading: catLoading } = useCategories();
   const [category, setCategory] = useState("gallery");
   const [files, setFiles] = useState<StagedFile[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -133,34 +118,11 @@ const AdminUpload = () => {
     setTimeout(() => setAllCopied(false), 2000);
   };
 
-  const handleSignOut = async () => { await signOut(); navigate("/admin/login"); };
-
   const pendingCount = files.filter((f) => f.status === "pending").length;
   const doneCount = files.filter((f) => f.status === "done").length;
 
   return (
-    <div className="min-h-screen bg-card">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 bg-background border-b border-border h-14 flex items-center px-6 gap-4">
-        <img
-          src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/9cc16a08-504a-4d.png"
-          alt="CBS Masonry"
-          crossOrigin="anonymous"
-          className="h-8 w-auto object-contain"
-        />
-        <div className="h-5 w-px bg-border" />
-        <span className="text-sm font-semibold text-foreground">Media Upload</span>
-        <div className="flex-1" />
-        <span className="text-xs text-muted-foreground hidden sm:block">{user?.email}</span>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border border-border rounded hover:bg-muted"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Sign Out
-        </button>
-      </header>
-
+    <AdminLayout>
       <div className="mx-auto max-w-[960px] px-6 py-8 space-y-6">
 
         {/* Category + controls row */}
@@ -171,9 +133,10 @@ const AdminUpload = () => {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="flex-1 text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              disabled={catLoading}
+              className="flex-1 text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-60"
             >
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
@@ -307,7 +270,7 @@ const AdminUpload = () => {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

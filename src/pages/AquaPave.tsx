@@ -6,9 +6,10 @@ import CTABanner from "@/components/CTABanner";
 import BBBSection from "@/components/BBBSection";
 import Footer from "@/components/Footer";
 import QuoteModal from "@/components/QuoteModal";
+import { useMediaSlots } from "@/hooks/useMediaSlots";
 
-/* ── Gallery images (placeholder — replace with Bunny.net CDN) ── */
-const galleryImages = [
+/* ── Fallback images ── */
+const GALLERY_DEFAULTS = [
   { src: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80", alt: "AquaPave driveway installation" },
   { src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80", alt: "Permeable paving stones" },
   { src: "https://images.unsplash.com/photo-1599619585752-c3edb42a414c?w=600&q=80", alt: "AquaPave pathway" },
@@ -18,6 +19,8 @@ const galleryImages = [
   { src: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80", alt: "Paved courtyard" },
   { src: "https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?w=600&q=80", alt: "Stone paving detail" },
 ];
+const HERO_DEFAULT = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=85";
+const DIAGRAM_DEFAULT = "https://images.unsplash.com/photo-1574591374979-5a7c69d8b06c?w=700&q=80";
 
 const features = [
   "Self-permeable — water drains freely with no sand",
@@ -32,6 +35,14 @@ const AquaPave = () => {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { slots } = useMediaSlots();
+
+  const heroSrc = slots["aquapave-hero"] ?? HERO_DEFAULT;
+  const diagramSrc = slots["aquapave-diagram"] ?? DIAGRAM_DEFAULT;
+  const galleryImages = GALLERY_DEFAULTS.map((img, i) => ({
+    ...img,
+    src: slots[`aquapave-gallery-${i + 1}`] ?? img.src,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,7 +54,7 @@ const AquaPave = () => {
         style={{ paddingTop: "96px" }}
       >
         <img
-          src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=85"
+          src={heroSrc}
           alt="AquaPave installation"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -129,7 +140,7 @@ const AquaPave = () => {
               {/* How it works diagram placeholder */}
               <div className="rounded overflow-hidden border border-border shadow-card">
                 <img
-                  src="https://images.unsplash.com/photo-1574591374979-5a7c69d8b06c?w=700&q=80"
+                  src={diagramSrc}
                   alt="AquaPave system cross-section diagram"
                   className="w-full h-auto object-cover"
                 />
