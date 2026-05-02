@@ -1,19 +1,33 @@
 # Media Library & Image Assignment System
 
 ## Context
-Images on the site (Gallery, AquaPave page) are hardcoded placeholder URLs. The user uploads real photos via `/admin/upload` but has no way to visually browse and assign them to page slots. This plan builds a full media library inside the admin panel.
+Images on the site (Gallery, AquaPave page) are hardcoded placeholder URLs. The user uploads real photos via `/admin/upload` but has no way to visually browse and assign them to page slots. This plan builds a full media library inside the admin panel with support for reassignment and user-created categories.
 
 ## What We're Building
-- `/admin/media` page: browse all uploaded Bunny.net images + assign them to named page slots
-- Database table: `media_slots` — stores slot_key → cdn_url assignments
-- Edge function: `bunny-list` — lists files from Bunny.net Storage API across all category folders
-- Update `bunny-upload` to also save file records in a `media_files` DB table (so the library works even without a Bunny.net list call)
-- Update `Gallery.tsx` and `AquaPave.tsx` to fetch slot values from DB (with hardcoded fallbacks)
-- Shared admin nav header extracted into `AdminLayout.tsx` (Upload + Media Library tabs)
+- `/admin/media` page: browse all uploaded Bunny.net images + assign/reassign them to named page slots
+- `media_categories` DB table: dynamic categories (replaces hardcoded array) — user can add new ones
+- `media_files` DB table: tracks all uploaded files
+- `media_slots` DB table: slot_key → cdn_url assignments (upsert = reassignable)
+- Edge function: `bunny-list` — lists files from Bunny.net + merges with `media_files`
+- Update `bunny-upload` to save records to `media_files`
+- Update `Upload.tsx` to use dynamic categories from DB
+- Update `Gallery.tsx` and `AquaPave.tsx` to use slot assignments (with fallbacks)
+- Shared `AdminLayout.tsx` header (Upload + Media Library tabs)
 
 ---
 
 ## Database (migration)
+
+### `media_categories` table
+| column | type | notes |
+|--------|------|-------|
+| id | uuid PK | |
+| value | text unique | slug e.g. "aquapave" |
+| label | text | display name e.g. "AquaPave" |
+| created_at | timestamptz | default now() |
+
+Pre-seeded with the existing 11 categories. Used by Upload dropdown and Media Library filter tabs.
+RLS: Enable — public SELECT, authenticated INSERT.
 
 ### `media_files` table
 | column | type | notes |
@@ -21,96 +35,122 @@ Images on the site (Gallery, AquaPave page) are hardcoded placeholder URLs. The 
 | id | uuid PK | |
 | cdn_url | text unique | full CDN URL |
 | file_name | text | e.g. cbs-masonry-aquapave-01.jpg |
-| folder | text | category folder e.g. "aquapave" |
+| folder | text | category value |
 | uploaded_at | timestamptz | default now() |
 
-RLS: Enable, allow authenticated read/insert.
+RLS: Enable — authenticated SELECT/INSERT.
 
 ### `media_slots` table
 | column | type | notes |
 |--------|------|-------|
-| slot_key | text PK | e.g. "home-gallery-1" |
-| cdn_url | text | assigned CDN URL |
+| slot_key | text PK | e.g. "home-gallery-1", "patios-gallery-3" |
+| cdn_url | text | assigned CDN URL (nullable = unassigned) |
 | alt_text | text | optional label |
+| page | text | "home", "aquapave", or category value |
 | updated_at | timestamptz | default now() |
 
-RLS: Enable, allow authenticated read/write.
+RLS: Enable — public SELECT (so site pages can read), authenticated INSERT/UPDATE.
+**Save via upsert** (`ON CONFLICT (slot_key) DO UPDATE`) — reassignment is just clicking a different image.
 
 ---
 
 ## Edge Functions
 
 ### Update `bunny-upload`
-After successful Bunny.net PUT, also `INSERT INTO media_files (cdn_url, file_name, folder) VALUES (...) ON CONFLICT (cdn_url) DO NOTHING`.
+After successful Bunny.net PUT, `INSERT INTO media_files (cdn_url, file_name, folder) ... ON CONFLICT (cdn_url) DO NOTHING` using service role Supabase client.
 
 ### New `bunny-list`
-Lists all files from Bunny.net Storage across known category folders.
-- Loops through all CATEGORY folders + root
-- `GET https://storage.bunnycdn.com/{ZONE}/{folder}/` with `AccessKey` header
-- Returns flat array of `{ cdnUrl, fileName, folder }` objects
-- Also merges with `media_files` table records for any that were uploaded before this feature
+- Reads all category values from `media_categories` via Supabase client
+- Loops: `GET https://storage.bunnycdn.com/{ZONE}/{folder}/` with `AccessKey` header for each
+- Merges with `media_files` table (union, dedup by cdn_url)
+- Returns `{ files: Array<{ cdnUrl, fileName, folder }> }`
 
 ---
 
 ## Frontend
 
-### Shared `AdminLayout.tsx` component
-- Replaces duplicate header in Upload.tsx
-- Shows logo, nav tabs: "Upload" | "Media Library", sign out button
+### `AdminLayout.tsx` (`src/components/admin/AdminLayout.tsx`)
+Shared header for all admin pages:
+- Logo, "Upload" tab (link to `/admin/upload`), "Media Library" tab (link to `/admin/media`)
+- Active tab highlighted
+- Email + Sign Out button on right
 
-### `/admin/media` — Media Library page
-**Layout: two-panel side by side (desktop), stacked on mobile**
-
-**Left panel — "Page Slots"** (grouped by page):
-- "Home Page": `home-gallery-1` → `home-gallery-12`
-- "AquaPave Page": `aquapave-hero`, `aquapave-diagram`, `aquapave-gallery-1` → `aquapave-gallery-8`
-- Each slot shows: label + current image thumbnail (or empty placeholder)
-- Clicking a slot **selects** it (highlights in blue)
-
-**Right panel — "Image Library"**:
-- Category filter tabs (All, AquaPave, Residential, Gallery, etc.)
-- Grid of image thumbnails loaded from `bunny-list` edge function + `media_files` table
-- Clicking an image when a slot is selected → saves to `media_slots` table → slot updates immediately
-
-**Assign flow**: Click slot → slot highlights → click image → instant assignment saved → slot thumbnail updates
+### `useCategories` hook (`src/hooks/useCategories.ts`)
+- Fetches `media_categories` ordered by `created_at`
+- Returns `{ categories, loading, addCategory(label) }`
+- `addCategory`: slugifies label, inserts row, refetches
 
 ### `useMediaSlots` hook (`src/hooks/useMediaSlots.ts`)
-- Fetches all rows from `media_slots` on mount
-- Returns `{ slots: Record<string, string>, loading }` (slot_key → cdn_url)
-- Used by Gallery.tsx and AquaPave.tsx
+- Fetches all `media_slots` rows
+- Returns `{ slots: Record<string, string>, assignSlot(key, url), clearSlot(key) }`
+- `assignSlot`: upserts row → updates local state immediately (optimistic)
+- `clearSlot`: sets cdn_url to null
+
+### `/admin/media` — `MediaLibrary.tsx`
+
+**Layout: two-column side by side on desktop, stacked on mobile**
+
+**Left panel — "Page Slots"** (~40% width, scrollable):
+- Collapsible groups: "Home Page", "AquaPave Page", + one group per extra category
+- Home group: slots `home-gallery-1` → `home-gallery-12`
+- AquaPave group: `aquapave-hero`, `aquapave-diagram`, `aquapave-gallery-1` → `aquapave-gallery-8`
+- Dynamic category group: `{category}-gallery-1` → `{category}-gallery-12`
+- Each slot card: small thumbnail (assigned image or grey placeholder box) + slot label
+- **Selected** slot: blue ring border
+- **Assigned** slot: small "×" button to clear/unassign
+- Clicking a slot selects it; clicking again deselects
+
+**Right panel — "Image Library"** (~60% width, scrollable):
+- Top: category filter tabs (All + one per `media_categories`) + "**+ New Category**" button
+- "New Category" → inline input or small modal: type label → click Add → `addCategory()` → new tab appears + new slot group created in left panel
+- Refresh button to re-fetch from Bunny.net
+- Image grid (3-4 cols): thumbnail, file name below
+- **Clicking an image when a slot is selected** → calls `assignSlot(selectedSlot, cdnUrl)` → left panel slot updates → selection stays active so next image/slot click works naturally
+- **Reassignment**: slot already has image → click it to re-select → click new image in library → upsert overwrites
+
+### Update `Upload.tsx`
+- Replace hardcoded `CATEGORIES` array with `useCategories()` hook
+- Use `AdminLayout` (removes duplicate header code)
+- Category dropdown includes any user-created categories automatically
 
 ### Update `Gallery.tsx`
-- Call `useMediaSlots()` at top
-- Use `slots["home-gallery-1"] ?? hardcoded_fallback` for each image src
+- Add `useMediaSlots()` call
+- Each item: `src: slots["home-gallery-1"] ?? "https://images.unsplash.com/..."` (fallback preserved)
 
 ### Update `AquaPave.tsx`
-- Same pattern: `slots["aquapave-hero"]`, `slots["aquapave-gallery-1"]`, etc.
+- Same: hero image, diagram image, 8 gallery images all use `slots["aquapave-*"] ?? fallback`
 
 ### Router update
-Add `/admin/media` route (ProtectedRoute wrapping new `MediaLibrary` page)
+Add `/admin/media` → `<ProtectedRoute><MediaLibrary /></ProtectedRoute>`
 
 ---
 
 ## Files to Create/Modify
 | File | Action |
 |------|--------|
-| `supabase/migrations/...` | Create `media_files` + `media_slots` tables |
-| `supabase/functions/bunny-upload/index.ts` | Update to save to `media_files` |
-| `supabase/functions/bunny-list/index.ts` | New function |
-| `src/components/admin/AdminLayout.tsx` | New shared layout |
-| `src/pages/admin/MediaLibrary.tsx` | New page |
-| `src/pages/admin/Upload.tsx` | Use AdminLayout, remove duplicate header |
+| `supabase/migrations/...` | Create 3 tables + seed categories |
+| `supabase/functions/bunny-upload/index.ts` | Save to `media_files` after upload |
+| `supabase/functions/bunny-list/index.ts` | New list function |
+| `src/components/admin/AdminLayout.tsx` | New shared admin header |
+| `src/pages/admin/MediaLibrary.tsx` | New media library page |
+| `src/pages/admin/Upload.tsx` | Use AdminLayout + dynamic categories |
+| `src/hooks/useCategories.ts` | New hook |
 | `src/hooks/useMediaSlots.ts` | New hook |
-| `src/components/Gallery.tsx` | Use slot hook |
-| `src/pages/AquaPave.tsx` | Use slot hook |
+| `src/components/Gallery.tsx` | Use slot hook with fallbacks |
+| `src/pages/AquaPave.tsx` | Use slot hook with fallbacks |
 | `src/router.tsx` | Add `/admin/media` route |
 
 ---
 
 ## Verification
-1. Log in to `/admin/upload`, upload a few test images
-2. Navigate to `/admin/media`
-3. Left panel shows all page slots, right panel shows uploaded images
-4. Click a slot → click an image → thumbnail updates in left panel
-5. Navigate to home page → Gallery shows assigned images
-6. Navigate to `/services/aquapave` → assigned images appear
+1. Log in → `/admin/upload`: category dropdown loads from DB (same 11 items as before)
+2. Upload a test image → appears in `media_files` table
+3. Navigate to `/admin/media`:
+   - Left panel shows all slot groups with empty placeholders
+   - Right panel shows uploaded image(s)
+4. Click "Home Gallery 1" slot → click uploaded image → slot thumbnail fills in
+5. Click same slot again → click a different image → **reassignment** works
+6. Click "×" on assigned slot → slot clears
+7. Click "+ New Category" → type "Patios" → new tab + "Patios Gallery" slot group appears
+8. Navigate to home page → Gallery shows assigned image in position 1
+9. Navigate to `/services/aquapave` → assigned images show
