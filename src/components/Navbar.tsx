@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Phone, Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ChevronDown, Menu, Phone, X } from "lucide-react";
+import { SERVICE_PAGES } from "@/lib/servicePages";
 
 interface NavbarProps {
   onGetQuote: () => void;
@@ -9,6 +11,7 @@ interface NavbarProps {
 const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
@@ -18,7 +21,6 @@ const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
 
   const navLinks = [
     { label: "About", href: "#about" },
-    { label: "Services", href: "#services" },
     { label: "Gallery", href: "#gallery" },
     { label: "References", href: "#reviews" },
   ];
@@ -34,6 +36,17 @@ const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
 
   const isLight = scrolled || mobileOpen;
 
+  const linkClass = (open = false) =>
+    `flex items-center gap-1 px-4 py-2 text-sm font-medium tracking-wide rounded transition-all duration-150 ${
+      isLight
+        ? open
+          ? "text-foreground bg-muted"
+          : "text-foreground/70 hover:text-foreground hover:bg-muted"
+        : open
+        ? "text-white bg-white/10"
+        : "text-white/90 hover:text-white hover:bg-white/10"
+    }`;
+
   return (
     <>
       <nav
@@ -48,10 +61,10 @@ const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
         <div className="mx-auto h-full flex items-center justify-between gap-6 px-6 md:px-10 max-w-[1280px]">
 
           {/* Logo only — no text beside it */}
-          <a
-            href="#"
+          <Link
+            to="/"
             className="flex items-center flex-shrink-0"
-            onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             <img
               src="https://grazia-prod.oss-ap-southeast-1.aliyuncs.com/resources/uid_100027458/9cc16a08-504a-4d.png"
@@ -61,20 +74,68 @@ const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
                 scrolled ? "h-[84px]" : "h-[152px]"
               }`}
             />
-          </a>
+          </Link>
 
           {/* Desktop nav links */}
           <ul className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <button
-                  onClick={() => handleNav(link.href)}
-                  className={`px-4 py-2 text-sm font-medium tracking-wide rounded transition-all duration-150 ${
-                    isLight
-                      ? "text-foreground/70 hover:text-foreground hover:bg-muted"
-                      : "text-white/90 hover:text-white hover:bg-white/10"
+            <li>
+              <button onClick={() => handleNav("#about")} className={linkClass()}>
+                About
+              </button>
+            </li>
+
+            {/* Services: every service page is one click away */}
+            <li
+              className="relative"
+              onMouseEnter={() => setServicesOpen(true)}
+              onMouseLeave={() => setServicesOpen(false)}
+            >
+              <button
+                onClick={() => setServicesOpen((open) => !open)}
+                aria-expanded={servicesOpen}
+                aria-haspopup="true"
+                className={linkClass(servicesOpen)}
+              >
+                Services
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    servicesOpen ? "rotate-180" : ""
                   }`}
-                >
+                />
+              </button>
+
+              {servicesOpen && (
+                <div className="absolute top-full left-0 pt-2 w-[330px]">
+                  <div className="rounded-lg border border-border bg-background shadow-elevated p-2">
+                    {SERVICE_PAGES.map((page) => {
+                      const Icon = page.icon;
+                      return (
+                        <Link
+                          key={page.slug}
+                          to={page.path}
+                          onClick={() => setServicesOpen(false)}
+                          className="flex items-start gap-3 rounded px-3 py-2.5 transition-colors hover:bg-muted"
+                        >
+                          <Icon className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="min-w-0">
+                            <span className="block text-[13px] font-semibold text-foreground">
+                              {page.navLabel}
+                            </span>
+                            <span className="block text-[11px] text-muted-foreground truncate">
+                              {page.subtitle}
+                            </span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </li>
+
+            {navLinks.slice(1).map((link) => (
+              <li key={link.href}>
+                <button onClick={() => handleNav(link.href)} className={linkClass()}>
                   {link.label}
                 </button>
               </li>
@@ -121,7 +182,7 @@ const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
 
       {/* Mobile menu */}
       <div
-        className={`fixed inset-0 z-40 bg-white flex flex-col items-center justify-center gap-7 transition-all duration-300 ${
+        className={`fixed inset-0 z-40 bg-background flex flex-col items-center justify-center gap-6 px-6 transition-all duration-300 ${
           mobileOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         style={{ top: "72px" }}
@@ -135,9 +196,34 @@ const Navbar = ({ onGetQuote, isInnerPage = false }: NavbarProps) => {
             {link.label}
           </button>
         ))}
+
+        <div className="w-full max-w-sm">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3 text-center">
+            Services
+          </p>
+          <div className="grid gap-1.5 max-h-[38vh] overflow-y-auto">
+            {SERVICE_PAGES.map((page) => {
+              const Icon = page.icon;
+              return (
+                <Link
+                  key={page.slug}
+                  to={page.path}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded border border-border bg-background hover:border-primary transition-colors"
+                >
+                  <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="text-[13px] font-medium text-foreground truncate">
+                    {page.navLabel}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
         <button
           onClick={() => { setMobileOpen(false); onGetQuote(); }}
-          className="mt-2 px-10 py-3.5 bg-primary text-primary-foreground text-base font-bold uppercase tracking-wide rounded-sm"
+          className="px-10 py-3.5 bg-primary text-primary-foreground text-base font-bold uppercase tracking-wide rounded-sm"
         >
           Get a Quote
         </button>

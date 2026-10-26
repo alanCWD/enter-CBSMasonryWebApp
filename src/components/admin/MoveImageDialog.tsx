@@ -60,7 +60,8 @@ const MoveImageDialog = ({ file, categories, onClose, onMove }: MoveImageDialogP
         </div>
 
         <p className="text-xs text-muted-foreground mb-3">
-          Moving a photo to AquaPave puts it on that page; moving it out takes it off.
+          Moving a photo into a service category puts it on that page's gallery; moving it out
+          takes it off.
         </p>
 
         <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto">

@@ -1,0 +1,10 @@
+-- Every service page fills its project gallery from one upload category, so those categories
+-- must stay readable for signed-out visitors. Fully additive: no table, row or policy is
+-- dropped or changed, and no existing data is touched.
+CREATE POLICY "public_read_service_files" ON media_files FOR SELECT
+  USING (folder IN ('concrete','paving-stone','natural-rock','chimney','excavation','aquapave'));
+
+-- The Concrete Construction page uses the existing "concrete" category, so give it the page's
+-- display name in the library and the upload dropdown. Its 4 existing photos are kept as-is.
+INSERT INTO media_categories (value, label) VALUES ('concrete', 'Concrete Construction')
+ON CONFLICT (value) DO UPDATE SET label = EXCLUDED.label;

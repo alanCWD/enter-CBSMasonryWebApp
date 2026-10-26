@@ -142,7 +142,7 @@ const MediaLibrary = () => {
     <AdminLayout>
       <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-56px)] lg:overflow-hidden">
         {/* ── Left panel: one-off page images ── */}
-        <div className="w-full lg:w-72 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-background flex flex-col lg:overflow-hidden">
+        <div className="w-full lg:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-background flex flex-col lg:overflow-hidden">
           <PageImageSlots
             slots={slots}
             selectedSlot={selectedSlot}

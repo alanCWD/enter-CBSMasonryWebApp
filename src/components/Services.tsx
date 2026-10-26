@@ -1,88 +1,96 @@
-import { Home, Building2, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { SERVICE_PAGES, slotKeysForPage } from "@/lib/servicePages";
+import { useMediaSlots } from "@/hooks/useMediaSlots";
+import { usePublicMedia } from "@/hooks/usePublicMedia";
 
-const services = [
-  {
-    icon: Home,
-    badge: "Residential",
-    title: "Residential",
-    description:
-      "CBS Masonry works with home builders and contractors to complete any residential masonry project in a timely and professional manner.",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
-    imageAlt: "Residential masonry work",
-  },
-  {
-    icon: Building2,
-    badge: "Commercial",
-    title: "Commercial",
-    description:
-      "We are here to help provide an artist's eye to your masonry project needs. If you can dream it, we can make it happen.",
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80",
-    imageAlt: "Commercial masonry project",
-  },
-  {
-    icon: Sparkles,
-    badge: "Specialty",
-    title: "Specialty",
-    description:
-      "CBS Masonry provides the trained eye a canvas to convert masonry projects and dreams into concrete reality.",
-    image: "https://images.unsplash.com/photo-1574591374979-5a7c69d8b06c?w=600&q=80",
-    imageAlt: "Specialty masonry work",
-  },
-];
+/** The six service pages, each card opening the full page. */
+const Services = () => {
+  const { slots } = useMediaSlots();
+  const { photosByFolder } = usePublicMedia();
 
-const Services = () => (
-  <section id="services" className="py-20 bg-background">
-    <div className="mx-auto px-6 md:px-10 max-w-[1280px]">
-      <div className="mb-12">
-        <h2 className="text-[clamp(22px,3vw,32px)] font-bold text-foreground mb-3">
-          Our Services
-        </h2>
-        <div className="w-10 h-[3px] rounded-full bg-primary mb-4" />
-        <p className="text-muted-foreground text-base max-w-lg">
-          From custom residential stonework to large-scale commercial projects,
-          CBS Masonry delivers craftsmanship at every scale.
-        </p>
+  return (
+    <section id="services" className="py-20 bg-background">
+      <div className="mx-auto px-6 md:px-10 max-w-[1280px]">
+        <div className="mb-12">
+          <h2 className="text-[clamp(22px,3vw,32px)] font-bold text-foreground mb-3">
+            Our Services
+          </h2>
+          <div className="w-10 h-[3px] rounded-full bg-primary mb-4" />
+          <p className="text-muted-foreground text-base max-w-lg">
+            From custom residential stonework to large-scale commercial projects,
+            CBS Masonry delivers craftsmanship at every scale.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {SERVICE_PAGES.map((page) => {
+            const Icon = page.icon;
+            const image =
+              slots[slotKeysForPage(page).hero] ?? photosByFolder[page.folder]?.[0]?.cdnUrl;
+
+            return (
+              <Link
+                key={page.slug}
+                to={page.path}
+                className="group bg-background border border-border rounded overflow-hidden flex flex-col transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5"
+              >
+                {/* Image, or a branded backdrop until the service has photos */}
+                <div className="relative h-52 overflow-hidden">
+                  {image ? (
+                    <>
+                      <img
+                        src={image}
+                        alt={`${page.navLabel} — CBS Masonry Ltd.`}
+                        crossOrigin="anonymous"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: "var(--gradient-brand)" }}
+                        aria-hidden="true"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Icon className="w-9 h-9 text-white/35" />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+                    </>
+                  )}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <span className="inline-block max-w-full truncate px-3 py-1 rounded-sm bg-primary text-primary-foreground text-[11px] font-bold tracking-[0.08em] uppercase">
+                      {page.navLabel}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+                    <h3 className="text-[17px] font-semibold text-foreground">
+                      {page.navLabel}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                    {page.card.blurb}
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 mt-5 text-[12px] font-bold uppercase tracking-[0.08em] text-primary">
+                    View service
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {services.map((svc) => (
-          <article
-            key={svc.title}
-            className="group bg-background border border-border rounded overflow-hidden flex flex-col transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5"
-          >
-            {/* Image */}
-            <div className="relative h-52 overflow-hidden">
-              <img
-                src={svc.image}
-                alt={svc.imageAlt}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute bottom-3 left-3">
-                <span className="px-3 py-1 rounded-sm bg-primary text-primary-foreground text-[11px] font-bold tracking-[0.08em] uppercase">
-                  {svc.badge}
-                </span>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 flex flex-col flex-1">
-              <div className="flex items-center gap-2.5 mb-3">
-                <svc.icon className="w-4 h-4 text-primary flex-shrink-0" />
-                <h3 className="text-[17px] font-semibold text-foreground">
-                  {svc.title}
-                </h3>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {svc.description}
-              </p>
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export default Services;

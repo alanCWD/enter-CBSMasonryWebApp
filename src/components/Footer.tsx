@@ -1,4 +1,6 @@
 import { Phone, MapPin, Clock, Facebook, Youtube, Linkedin, Instagram } from "lucide-react";
+import { Link } from "react-router-dom";
+import { SERVICE_PAGES } from "@/lib/servicePages";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none">
@@ -9,17 +11,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const services = [
-  { label: "Chimney Works", href: "#services" },
-  { label: "WCB Scaffolding", href: "#services" },
-  { label: "Brick Restoration", href: "#services" },
-  { label: "Flagstone", href: "#services" },
-  { label: "Natural Rock", href: "#services" },
-  { label: "Culture Stone", href: "#services" },
-  { label: "Paving Stone", href: "#services" },
-  { label: "AquaPave", href: "/services/aquapave" },
-  { label: "Excavation", href: "#services" },
-];
+const services = SERVICE_PAGES.map((page) => ({ label: page.navLabel, href: page.path }));
 
 const hours = [
   { day: "Mon – Fri", time: "8:00 AM – 4:00 PM", open: true },
@@ -74,13 +66,12 @@ const Footer = () => (
           <ul className="space-y-2">
             {services.map((svc) => (
               <li key={svc.label}>
-                <a
-                  href={svc.href}
-                  onClick={svc.href.startsWith("#") ? (e) => { e.preventDefault(); document.querySelector(svc.href)?.scrollIntoView({ behavior: "smooth" }); } : undefined}
+                <Link
+                  to={svc.href}
                   className="text-[13px] text-white/50 hover:text-white transition-colors"
                 >
                   {svc.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

@@ -1,9 +1,10 @@
 import Index from "./pages/Index";
-import AquaPave from "./pages/AquaPave";
+import ServicePage from "./pages/ServicePage";
 import Login from "./pages/admin/Login";
 import AdminUpload from "./pages/admin/Upload";
 import MediaLibrary from "./pages/admin/MediaLibrary";
 import NotFound from "./pages/NotFound";
+import { SERVICE_PAGES } from "./lib/servicePages";
 
 export const routers = [
     {
@@ -11,11 +12,12 @@ export const routers = [
       name: 'home',
       element: <Index />,
     },
-    {
-      path: "/services/aquapave",
-      name: 'aquapave',
-      element: <AquaPave />,
-    },
+    /* One route per service page, defined in src/lib/servicePages.ts */
+    ...SERVICE_PAGES.map((page) => ({
+      path: page.path,
+      name: page.slug,
+      element: <ServicePage slug={page.slug} />,
+    })),
     {
       path: "/admin/login",
       name: 'admin-login',

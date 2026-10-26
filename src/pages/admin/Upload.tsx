@@ -7,7 +7,7 @@ import {
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Switch } from "@/components/ui/switch";
 import { useCategories } from "@/hooks/useCategories";
-import { AQUAPAVE_FOLDER } from "@/lib/media";
+import { servicePageForFolder } from "@/lib/servicePages";
 
 type FileStatus = "pending" | "uploading" | "done" | "error";
 
@@ -39,7 +39,7 @@ const AdminUpload = () => {
   const { categories, loading: catLoading } = useCategories();
   const [category, setCategory] = useState("gallery");
   const [featureHome, setFeatureHome] = useState(false);
-  const [lastUpload, setLastUpload] = useState<{ count: number; label: string; category: string; featured: boolean } | null>(null);
+  const [lastUpload, setLastUpload] = useState<{ count: number; label: string; pageTitle: string | null; featured: boolean } | null>(null);
   const [files, setFiles] = useState<StagedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -47,12 +47,12 @@ const AdminUpload = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeCategoryLabel = categories.find((c) => c.value === category)?.label ?? category;
-  const goesToAquaPave = category === AQUAPAVE_FOLDER;
+  const targetPage = servicePageForFolder(category);
 
-  const destinationText = goesToAquaPave && featureHome
-    ? `Photos land in the ${activeCategoryLabel} page gallery and the home page gallery.`
-    : goesToAquaPave
-    ? `Photos land in the ${activeCategoryLabel} page gallery.`
+  const destinationText = targetPage && featureHome
+    ? `Photos land in the ${targetPage.title} page gallery and the home page gallery.`
+    : targetPage
+    ? `Photos land in the ${targetPage.title} page gallery.`
     : featureHome
     ? "Photos are added to the home page gallery straight away."
     : "Photos are stored in the library and show on the site only once you feature them.";
@@ -92,7 +92,7 @@ const AdminUpload = () => {
     const pending = files.filter((f) => f.status === "pending");
     if (!pending.length) return;
     setUploading(true);
-    setLastUpload({ count: pending.length, label: activeCategoryLabel, category, featured: featureHome });
+    setLastUpload({ count: pending.length, label: activeCategoryLabel, pageTitle: targetPage?.title ?? null, featured: featureHome });
 
     for (const staged of pending) {
       setFiles((prev) => prev.map((f) => f.id === staged.id ? { ...f, status: "uploading" } : f));
@@ -207,14 +207,12 @@ const AdminUpload = () => {
             <p className="text-xs text-foreground leading-relaxed">
               {lastUpload.count} photo{lastUpload.count !== 1 ? "s" : ""} uploaded to{" "}
               <strong className="font-semibold">{lastUpload.label}</strong>.{" "}
-              {lastUpload.category === AQUAPAVE_FOLDER
-                ? "They are now in the AquaPave page gallery"
+              {lastUpload.pageTitle
+                ? `They are now in the ${lastUpload.pageTitle} page gallery`
                 : "They are stored in the library"}
               {lastUpload.featured
-                ? lastUpload.category === AQUAPAVE_FOLDER
-                  ? " and in the home page gallery."
-                  : " and are now in the home page gallery."
-                : lastUpload.category === AQUAPAVE_FOLDER
+                ? " and in the home page gallery."
+                : lastUpload.pageTitle
                 ? "."
                 : " — feature them from the Media Library to show them on the home page."}
             </p>
