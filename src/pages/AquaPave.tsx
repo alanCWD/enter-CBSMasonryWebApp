@@ -7,6 +7,7 @@ import BBBSection from "@/components/BBBSection";
 import Footer from "@/components/Footer";
 import QuoteModal from "@/components/QuoteModal";
 import { useMediaSlots } from "@/hooks/useMediaSlots";
+import { usePublicMedia } from "@/hooks/usePublicMedia";
 
 /* ── Fallback images ── */
 const GALLERY_DEFAULTS = [
@@ -36,13 +37,18 @@ const AquaPave = () => {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const navigate = useNavigate();
   const { slots } = useMediaSlots();
+  const { aquapavePhotos } = usePublicMedia();
 
   const heroSrc = slots["aquapave-hero"] ?? HERO_DEFAULT;
   const diagramSrc = slots["aquapave-diagram"] ?? DIAGRAM_DEFAULT;
-  const galleryImages = GALLERY_DEFAULTS.map((img, i) => ({
-    ...img,
-    src: slots[`aquapave-gallery-${i + 1}`] ?? img.src,
-  }));
+
+  // Everything filed under the AquaPave category shows up here automatically, minus the
+  // photo already used as the hero or the diagram so projects are never shown twice.
+  const featuredOnPage = new Set([slots["aquapave-hero"], slots["aquapave-diagram"]].filter(Boolean) as string[]);
+  const uploadedGallery = aquapavePhotos
+    .filter((photo) => !featuredOnPage.has(photo.cdnUrl))
+    .map((photo) => ({ src: photo.cdnUrl, alt: photo.categoryLabel ? `${photo.categoryLabel} project` : "AquaPave project" }));
+  const galleryImages = uploadedGallery.length ? uploadedGallery : GALLERY_DEFAULTS;
 
   return (
     <div className="min-h-screen bg-background">

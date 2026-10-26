@@ -3133,6 +3133,7 @@ export type Database = {
       media_files: {
         Row: {
           cdn_url: string
+          featured_home: boolean
           file_name: string
           folder: string
           id: string
@@ -3140,6 +3141,7 @@ export type Database = {
         }
         Insert: {
           cdn_url: string
+          featured_home?: boolean
           file_name: string
           folder?: string
           id?: string
@@ -3147,6 +3149,7 @@ export type Database = {
         }
         Update: {
           cdn_url?: string
+          featured_home?: boolean
           file_name?: string
           folder?: string
           id?: string
@@ -3227,7 +3230,7 @@ export type Database = {
         }
         Relationships: []
       }
-      messages_2026_04_29: {
+      messages_2026_10_25: {
         Row: {
           event: string | null
           extension: string
@@ -3260,7 +3263,7 @@ export type Database = {
         }
         Relationships: []
       }
-      messages_2026_04_30: {
+      messages_2026_10_26: {
         Row: {
           event: string | null
           extension: string
@@ -3293,7 +3296,7 @@ export type Database = {
         }
         Relationships: []
       }
-      messages_2026_05_01: {
+      messages_2026_10_27: {
         Row: {
           event: string | null
           extension: string
@@ -3326,7 +3329,7 @@ export type Database = {
         }
         Relationships: []
       }
-      messages_2026_05_02: {
+      messages_2026_10_28: {
         Row: {
           event: string | null
           extension: string
@@ -3359,7 +3362,7 @@ export type Database = {
         }
         Relationships: []
       }
-      messages_2026_05_03: {
+      messages_2026_10_29: {
         Row: {
           event: string | null
           extension: string

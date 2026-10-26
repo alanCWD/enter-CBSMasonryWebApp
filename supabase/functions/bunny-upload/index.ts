@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
     const file = formData.get("file") as File;
     const fileName = formData.get("fileName") as string;
     const folder = (formData.get("folder") as string) || "";
+    const featuredHome = (formData.get("featuredHome") as string) === "true";
 
     if (!file || !fileName) {
       return new Response(JSON.stringify({ error: "Missing file or fileName" }), {
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
     const cdnBase = BUNNY_CDN.replace(/\/$/, "");
     const cdnUrl = `${cdnBase}/${filePath}`;
 
-    // Save to media_files table
+    // Save to media_files table (featured_home controls the home page gallery pool)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -64,13 +65,17 @@ Deno.serve(async (req) => {
     );
     await supabase
       .from("media_files")
-      .insert({ cdn_url: cdnUrl, file_name: fileName, folder })
+      .upsert(
+        { cdn_url: cdnUrl, file_name: fileName, folder, featured_home: featuredHome },
+        { onConflict: "cdn_url" }
+      )
       .select()
       .maybeSingle();
 
-    return new Response(JSON.stringify({ success: true, cdnUrl, fileName, filePath }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true, cdnUrl, fileName, filePath, featuredHome }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), {

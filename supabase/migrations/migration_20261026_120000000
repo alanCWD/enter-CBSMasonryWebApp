@@ -1,0 +1,11 @@
+-- Adds home-page featured placement for photos, and lets signed-out visitors read only
+-- the photos that are published (featured for home, or in the AquaPave page category).
+
+ALTER TABLE media_files ADD COLUMN IF NOT EXISTS featured_home boolean NOT NULL DEFAULT false;
+
+CREATE POLICY "auth_update_files" ON media_files FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "public_read_gallery_files" ON media_files FOR SELECT
+  USING (featured_home = true OR folder = 'aquapave');

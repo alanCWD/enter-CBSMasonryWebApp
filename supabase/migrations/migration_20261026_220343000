@@ -1,0 +1,3 @@
+-- Revert the temporary verification data from the earlier check: back to no photos featured,
+-- which is how the library stood before the test.
+UPDATE media_files SET featured_home = false WHERE featured_home = true;

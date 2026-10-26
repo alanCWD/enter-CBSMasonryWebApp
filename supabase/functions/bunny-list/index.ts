@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface MediaRecord {
+  cdnUrl: string;
+  fileName: string;
+  folder: string;
+  featuredHome: boolean;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,17 +46,35 @@ Deno.serve(async (req) => {
     // Also load files from media_files table as fallback/supplement
     const { data: dbFiles } = await supabase
       .from("media_files")
-      .select("cdn_url, file_name, folder")
+      .select("cdn_url, file_name, folder, featured_home")
       .order("uploaded_at", { ascending: false });
 
-    const dbMap = new Map<string, { cdnUrl: string; fileName: string; folder: string }>();
+    const dbMap = new Map<string, MediaRecord>();
     for (const f of dbFiles ?? []) {
-      dbMap.set(f.cdn_url, { cdnUrl: f.cdn_url, fileName: f.file_name, folder: f.folder });
+      dbMap.set(f.cdn_url, {
+        cdnUrl: f.cdn_url,
+        fileName: f.file_name,
+        folder: f.folder,
+        featuredHome: f.featured_home === true,
+      });
     }
 
     // Fetch from Bunny.net for each folder
-    const results: { cdnUrl: string; fileName: string; folder: string }[] = [];
+    const results: MediaRecord[] = [];
     const seen = new Set<string>();
+
+    const pushBunnyItem = (folder: string, objectName: string) => {
+      const cdnUrl = folder ? `${cdnBase}/${folder}/${objectName}` : `${cdnBase}/${objectName}`;
+      if (seen.has(cdnUrl)) return;
+      seen.add(cdnUrl);
+      const known = dbMap.get(cdnUrl);
+      results.push({
+        cdnUrl,
+        fileName: objectName,
+        folder: known?.folder ?? folder,
+        featuredHome: known?.featuredHome ?? false,
+      });
+    };
 
     for (const folder of folders) {
       try {
@@ -61,11 +86,7 @@ Deno.serve(async (req) => {
         const items: Array<{ ObjectName: string; IsDirectory: boolean }> = await res.json();
         for (const item of items) {
           if (item.IsDirectory) continue;
-          const cdnUrl = `${cdnBase}/${folder}/${item.ObjectName}`;
-          if (!seen.has(cdnUrl)) {
-            seen.add(cdnUrl);
-            results.push({ cdnUrl, fileName: item.ObjectName, folder });
-          }
+          pushBunnyItem(folder, item.ObjectName);
         }
       } catch {
         // skip folder on error
@@ -82,11 +103,7 @@ Deno.serve(async (req) => {
         const items: Array<{ ObjectName: string; IsDirectory: boolean }> = await res.json();
         for (const item of items) {
           if (item.IsDirectory) continue;
-          const cdnUrl = `${cdnBase}/${item.ObjectName}`;
-          if (!seen.has(cdnUrl)) {
-            seen.add(cdnUrl);
-            results.push({ cdnUrl, fileName: item.ObjectName, folder: "" });
-          }
+          pushBunnyItem("", item.ObjectName);
         }
       }
     } catch { /* skip */ }

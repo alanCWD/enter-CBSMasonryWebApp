@@ -1,119 +1,90 @@
-import { useState, useEffect } from "react";
-import { Plus, RefreshCw, X, CheckCircle, FolderInput } from "lucide-react";
+import { useState } from "react";
+import { Plus, RefreshCw, Star, X } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import PageImageSlots from "@/components/admin/PageImageSlots";
+import ImageGrid from "@/components/admin/ImageGrid";
+import MoveImageDialog from "@/components/admin/MoveImageDialog";
+import NewCategoryDialog from "@/components/admin/NewCategoryDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
 import { useMediaSlots } from "@/hooks/useMediaSlots";
+import { useMediaFiles } from "@/hooks/useMediaFiles";
+import { SINGLE_IMAGE_SLOTS, type MediaFileRecord } from "@/lib/media";
 
-interface MediaFile {
-  cdnUrl: string;
-  fileName: string;
-  folder: string;
-}
-
-const FIXED_PAGES = [
-  {
-    page: "home",
-    label: "Home Page",
-    slots: Array.from({ length: 12 }, (_, i) => ({
-      key: `home-gallery-${i + 1}`,
-      label: `Gallery ${i + 1}`,
-    })),
-  },
-  {
-    page: "aquapave",
-    label: "AquaPave Page",
-    slots: [
-      { key: "aquapave-hero", label: "Hero Image" },
-      { key: "aquapave-diagram", label: "System Diagram" },
-      ...Array.from({ length: 8 }, (_, i) => ({
-        key: `aquapave-gallery-${i + 1}`,
-        label: `Gallery ${i + 1}`,
-      })),
-    ],
-  },
-];
-
-const FIXED_PAGE_VALUES = ["aquapave"];
+const FEATURED_FILTER = "featured";
 
 const MediaLibrary = () => {
   const { categories, loading: catLoading, addCategory } = useCategories();
-  const { slots, assignSlot, clearSlot } = useMediaSlots();
-  const [files, setFiles] = useState<MediaFile[]>([]);
-  const [filesLoading, setFilesLoading] = useState(true);
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(["home", "aquapave"])
-  );
-  const [justAssigned, setJustAssigned] = useState<string | null>(null);
-  const [moveTarget, setMoveTarget] = useState<MediaFile | null>(null);
-  const [moveLoading, setMoveLoading] = useState(false);
-  const [moveError, setMoveError] = useState("");
-  const [newCatOpen, setNewCatOpen] = useState(false);
-  const [newCatLabel, setNewCatLabel] = useState("");
-  const [newCatError, setNewCatError] = useState("");
-  const [newCatLoading, setNewCatLoading] = useState(false);
+  const { slots, assignSlot, clearSlot, refetch: refetchSlots } = useMediaSlots();
+  const { files, loading, error, reload, setFeatured, applyMove } = useMediaFiles();
 
-  const loadFiles = async () => {
-    setFilesLoading(true);
-    const { data, error } = await supabase.functions.invoke("bunny-list");
-    if (!error && data?.files) {
-      setFiles(data.files);
-    }
-    setFilesLoading(false);
+  const [filter, setFilter] = useState<string>("all");
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [moveTarget, setMoveTarget] = useState<MediaFileRecord | null>(null);
+  const [newCatOpen, setNewCatOpen] = useState(false);
+
+  const featuredCount = files.filter((f) => f.featuredHome).length;
+
+  const visibleFiles = files.filter((file) => {
+    if (filter === "all") return true;
+    if (filter === FEATURED_FILTER) return file.featuredHome;
+    return file.folder === filter;
+  });
+
+  const handleSlotClick = (key: string) => {
+    setSelectedSlot((prev) => (prev === key ? null : key));
+    setSelectedFiles(new Set());
   };
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
-
-  const toggleGroup = (page: string) => {
-    setExpandedGroups((prev) => {
+  const handleCardClick = async (file: MediaFileRecord) => {
+    if (selectedSlot) {
+      const page = SINGLE_IMAGE_SLOTS.find((s) => s.key === selectedSlot)?.page ?? file.folder;
+      await assignSlot(selectedSlot, file.cdnUrl, page);
+      return;
+    }
+    setSelectedFiles((prev) => {
       const next = new Set(prev);
-      if (next.has(page)) next.delete(page);
-      else next.add(page);
+      if (next.has(file.cdnUrl)) next.delete(file.cdnUrl);
+      else next.add(file.cdnUrl);
       return next;
     });
   };
 
-  const handleSlotClick = (key: string) => {
-    setSelectedSlot((prev) => (prev === key ? null : key));
+  const handleToggleFeatured = async (file: MediaFileRecord) => {
+    setActionError("");
+    setSaving((prev) => new Set(prev).add(file.cdnUrl));
+    const message = await setFeatured([file.cdnUrl], !file.featuredHome);
+    if (message) setActionError(`Could not update the home page gallery: ${message}`);
+    setSaving((prev) => {
+      const next = new Set(prev);
+      next.delete(file.cdnUrl);
+      return next;
+    });
   };
 
-  const handleImageClick = async (file: MediaFile) => {
-    if (!selectedSlot) return;
-    const page = selectedSlot.split("-")[0];
-    await assignSlot(selectedSlot, file.cdnUrl, page);
-    setJustAssigned(selectedSlot);
-    setTimeout(() => setJustAssigned(null), 1500);
-  };
-
-  const handleClearSlot = async (e: React.MouseEvent, key: string) => {
-    e.stopPropagation();
-    await clearSlot(key);
-    if (selectedSlot === key) setSelectedSlot(null);
-  };
-
-  const handleAddCategory = async () => {
-    if (!newCatLabel.trim()) return;
-    setNewCatLoading(true);
-    setNewCatError("");
-    const { error } = await addCategory(newCatLabel);
-    if (error) {
-      setNewCatError(error);
-    } else {
-      setNewCatLabel("");
-      setNewCatOpen(false);
+  const handleBulkFeatured = async (featured: boolean) => {
+    const targets = files
+      .filter((f) => selectedFiles.has(f.cdnUrl) && f.featuredHome !== featured)
+      .map((f) => f.cdnUrl);
+    if (!targets.length) {
+      setSelectedFiles(new Set());
+      return;
     }
-    setNewCatLoading(false);
+    setBulkSaving(true);
+    setActionError("");
+    const message = await setFeatured(targets, featured);
+    if (message) setActionError(`Could not update the home page gallery: ${message}`);
+    else setSelectedFiles(new Set());
+    setBulkSaving(false);
   };
 
-  const handleMoveFile = async (targetFolder: string) => {
-    if (!moveTarget) return;
-    setMoveLoading(true);
-    setMoveError("");
-    const { data, error } = await supabase.functions.invoke("bunny-move", {
+  const handleMove = async (targetFolder: string): Promise<string | null> => {
+    if (!moveTarget) return null;
+    const { data, error: invokeError } = await supabase.functions.invoke("bunny-move", {
       body: {
         sourceCdnUrl: moveTarget.cdnUrl,
         sourceFolder: moveTarget.folder,
@@ -121,151 +92,46 @@ const MediaLibrary = () => {
         targetFolder,
       },
     });
-    if (error || !data?.newCdnUrl) {
-      setMoveError(error?.message || data?.error || "Move failed");
-      setMoveLoading(false);
-      return;
+    if (invokeError || !data?.newCdnUrl) {
+      return invokeError?.message || data?.error || "Move failed";
     }
-    // Update local files list
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.cdnUrl === moveTarget.cdnUrl
-          ? { ...f, cdnUrl: data.newCdnUrl, folder: targetFolder }
-          : f
-      )
-    );
-    setMoveLoading(false);
-    setMoveTarget(null);
+    applyMove(moveTarget.cdnUrl, data.newCdnUrl, targetFolder);
+    refetchSlots();
+    return null;
   };
 
-  const filteredFiles =
-    filterCategory === "all"
-      ? files
-      : files.filter((f) => f.folder === filterCategory);
+  const handleRefresh = async () => {
+    setSelectedFiles(new Set());
+    await Promise.all([reload(), refetchSlots()]);
+  };
 
-  const dynamicGroups = categories
-    .filter((c) => !FIXED_PAGE_VALUES.includes(c.value))
-    .map((c) => ({
-      page: c.value,
-      label: c.label,
-      slots: Array.from({ length: 12 }, (_, i) => ({
-        key: `${c.value}-gallery-${i + 1}`,
-        label: `Gallery ${i + 1}`,
-      })),
-    }));
-
-  const allGroups = [...FIXED_PAGES, ...dynamicGroups];
+  const selectedOnHome = files.filter((f) => selectedFiles.has(f.cdnUrl) && f.featuredHome).length;
+  const selectedOffHome = selectedFiles.size - selectedOnHome;
 
   return (
     <AdminLayout>
       <div className="flex h-[calc(100vh-56px)] overflow-hidden">
-        {/* ── Left panel: Page Slots ── */}
+        {/* ── Left panel: one-off page images ── */}
         <div className="w-72 flex-shrink-0 border-r border-border bg-background flex flex-col overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-border bg-card/60 flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Page Slots
-            </span>
-            {selectedSlot && (
-              <span className="text-[10px] text-primary font-medium animate-pulse">
-                Pick an image →
-              </span>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {allGroups.map((group) => (
-              <div key={group.page} className="border-b border-border last:border-0">
-                <button
-                  onClick={() => toggleGroup(group.page)}
-                  className="w-full flex items-center justify-between px-4 py-2 hover:bg-muted/50 transition-colors text-left"
-                >
-                  <span className="text-[11px] font-semibold text-foreground">
-                    {group.label}
-                  </span>
-                  <span className="text-muted-foreground text-[10px]">
-                    {expandedGroups.has(group.page) ? "▲" : "▼"}
-                  </span>
-                </button>
-
-                {expandedGroups.has(group.page) && (
-                  <div className="px-3 pb-3 grid grid-cols-3 gap-1.5">
-                    {group.slots.map((slot) => {
-                      const assigned = slots[slot.key];
-                      const isSelected = selectedSlot === slot.key;
-                      const wasJustAssigned = justAssigned === slot.key;
-
-                      return (
-                        <div
-                          key={slot.key}
-                          onClick={() => handleSlotClick(slot.key)}
-                          className={`relative rounded overflow-hidden cursor-pointer transition-all border-2 ${
-                            isSelected
-                              ? "border-primary scale-[1.03] shadow-md"
-                              : wasJustAssigned
-                              ? "border-green-500"
-                              : assigned
-                              ? "border-border hover:border-primary/60"
-                              : "border-dashed border-border hover:border-muted-foreground/60"
-                          }`}
-                          style={{ aspectRatio: "1" }}
-                        >
-                          {assigned ? (
-                            <img
-                              src={assigned}
-                              alt={slot.label}
-                              className="w-full h-full object-cover"
-                              crossOrigin="anonymous"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-muted/40 flex items-center justify-center">
-                              <span className="text-[8px] text-muted-foreground/70 text-center leading-tight px-0.5">
-                                Empty
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Slot label */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/55 px-1 py-0.5">
-                            <span className="text-[8px] text-white/90 font-medium block truncate">
-                              {slot.label}
-                            </span>
-                          </div>
-
-                          {/* Clear button */}
-                          {assigned && !isSelected && (
-                            <button
-                              onClick={(e) => handleClearSlot(e, slot.key)}
-                              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/50 flex items-center justify-center hover:bg-destructive transition-colors opacity-0 group-hover:opacity-100"
-                              style={{ opacity: 1 }}
-                            >
-                              <X className="w-2.5 h-2.5 text-white" />
-                            </button>
-                          )}
-
-                          {/* Just-assigned checkmark */}
-                          {wasJustAssigned && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                              <CheckCircle className="w-6 h-6 text-green-400" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <PageImageSlots
+            slots={slots}
+            selectedSlot={selectedSlot}
+            onSelect={handleSlotClick}
+            onClear={(key) => {
+              clearSlot(key);
+              if (selectedSlot === key) setSelectedSlot(null);
+            }}
+          />
         </div>
 
-        {/* ── Right panel: Image Library ── */}
+        {/* ── Right panel: photo inventory ── */}
         <div className="flex-1 flex flex-col overflow-hidden bg-card/30">
-          {/* Category filter tabs */}
+          {/* Filters */}
           <div className="border-b border-border bg-background px-4 py-2 flex items-center gap-1.5 flex-wrap">
             <button
-              onClick={() => setFilterCategory("all")}
+              onClick={() => setFilter("all")}
               className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors whitespace-nowrap ${
-                filterCategory === "all"
+                filter === "all"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
               }`}
@@ -273,13 +139,25 @@ const MediaLibrary = () => {
               All
             </button>
 
+            <button
+              onClick={() => setFilter(FEATURED_FILTER)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors whitespace-nowrap ${
+                filter === FEATURED_FILTER
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+              }`}
+            >
+              <Star className={`w-3 h-3 ${filter === FEATURED_FILTER ? "fill-current" : ""}`} />
+              Featured on home
+            </button>
+
             {!catLoading &&
               categories.map((cat) => (
                 <button
                   key={cat.value}
-                  onClick={() => setFilterCategory(cat.value)}
+                  onClick={() => setFilter(cat.value)}
                   className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors whitespace-nowrap ${
-                    filterCategory === cat.value
+                    filter === cat.value
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
                   }`}
@@ -289,11 +167,7 @@ const MediaLibrary = () => {
               ))}
 
             <button
-              onClick={() => {
-                setNewCatOpen(true);
-                setNewCatError("");
-                setNewCatLabel("");
-              }}
+              onClick={() => setNewCatOpen(true)}
               className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors whitespace-nowrap"
             >
               <Plus className="w-3 h-3" />
@@ -302,23 +176,29 @@ const MediaLibrary = () => {
 
             <div className="flex-1" />
 
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap px-1">
+              {files.length} photo{files.length !== 1 ? "s" : ""} · {featuredCount} on home
+            </span>
+
             <button
-              onClick={loadFiles}
-              disabled={filesLoading}
+              onClick={handleRefresh}
+              disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1 rounded text-[11px] text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-3 h-3 ${filesLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </button>
           </div>
 
-          {/* Instruction banner */}
+          {/* Status / actions strip */}
           {selectedSlot ? (
             <div className="bg-primary/10 border-b border-primary/25 px-4 py-2 flex items-center justify-between">
               <span className="text-[11px] text-primary font-medium">
                 Slot selected:{" "}
-                <strong className="font-semibold">{selectedSlot}</strong> — click
-                an image below to assign it (or reassign)
+                <strong className="font-semibold">
+                  {SINGLE_IMAGE_SLOTS.find((s) => s.key === selectedSlot)?.label ?? selectedSlot}
+                </strong>{" "}
+                — click a photo below to place it here.
               </span>
               <button
                 onClick={() => setSelectedSlot(null)}
@@ -327,215 +207,133 @@ const MediaLibrary = () => {
                 Cancel
               </button>
             </div>
+          ) : selectedFiles.size > 0 ? (
+            <div className="bg-primary/10 border-b border-primary/25 px-4 py-2 flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] text-primary font-medium">
+                {selectedFiles.size} photo{selectedFiles.size !== 1 ? "s" : ""} selected
+              </span>
+              <div className="flex-1" />
+              {bulkSaving ? (
+                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleBulkFeatured(true)}
+                    disabled={!selectedOffHome}
+                    className="px-3 py-1 rounded text-[11px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors"
+                  >
+                    Show on home page
+                  </button>
+                  <button
+                    onClick={() => handleBulkFeatured(false)}
+                    disabled={!selectedOnHome}
+                    className="px-3 py-1 rounded text-[11px] font-semibold border border-border bg-background text-foreground hover:bg-muted disabled:opacity-40 transition-colors"
+                  >
+                    Remove from home
+                  </button>
+                  <button
+                    onClick={() => setSelectedFiles(new Set())}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Clear
+                  </button>
+                </>
+              )}
+            </div>
           ) : (
-            <div className="bg-muted/30 border-b border-border px-4 py-2">
+            <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center">
               <span className="text-[11px] text-muted-foreground">
-                ← Select a slot on the left, then click an image here to assign it.
-                Filter by category using the tabs above.
+                Press the star on a photo to add or remove it from the home page gallery. Select
+                several photos to feature a whole batch, or pick a page image on the left to place
+                one specific photo.
               </span>
             </div>
           )}
 
-          {/* Image grid */}
+          {actionError && (
+            <div className="bg-destructive/10 border-b border-destructive/30 px-4 py-2 flex items-center justify-between">
+              <span className="text-[11px] text-destructive">{actionError}</span>
+              <button
+                onClick={() => setActionError("")}
+                className="text-destructive/70 hover:text-destructive"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Inventory */}
           <div className="flex-1 overflow-y-auto p-4">
-            {filesLoading ? (
+            {loading ? (
               <div className="flex items-center justify-center h-40">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : filteredFiles.length === 0 ? (
+            ) : error ? (
               <div className="flex flex-col items-center justify-center h-40 text-center gap-2">
-                <p className="text-sm text-muted-foreground">No images found.</p>
+                <p className="text-sm text-destructive">{error}</p>
+                <button
+                  onClick={handleRefresh}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : visibleFiles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  {filter === FEATURED_FILTER
+                    ? "No photos are featured on the home page yet."
+                    : "No photos here yet."}
+                </p>
                 <p className="text-xs text-muted-foreground/70">
-                  Upload images via the Upload tab first.
+                  Upload photos from the Upload tab to add them to a category.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2">
-                {filteredFiles.map((file) => (
-                  <div
-                    key={file.cdnUrl}
-                    onClick={() => handleImageClick(file)}
-                    className={`group relative rounded-md overflow-hidden border transition-all ${
-                      selectedSlot
-                        ? "border-border cursor-pointer hover:border-primary hover:shadow-lg hover:scale-[1.03]"
-                        : "border-border cursor-default"
-                    }`}
-                    style={{ aspectRatio: "1" }}
-                  >
-                    <img
-                      src={file.cdnUrl}
-                      alt={file.fileName}
-                      className="w-full h-full object-cover"
-                      crossOrigin="anonymous"
-                      loading="lazy"
-                    />
-
-                    {/* Hover overlay when a slot is selected */}
-                    {selectedSlot && (
-                      <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/20 transition-all flex items-center justify-center">
-                        <div className="w-8 h-8 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-lg">
-                          <CheckCircle className="w-4 h-4 text-primary-foreground" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Move to category button — visible on hover when no slot selected */}
-                    {!selectedSlot && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMoveTarget(file);
-                          setMoveError("");
-                        }}
-                        title="Move to category"
-                        className="absolute top-1 right-1 w-6 h-6 rounded bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary"
-                      >
-                        <FolderInput className="w-3.5 h-3.5 text-white" />
-                      </button>
-                    )}
-
-                    {/* File name on hover */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/65 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[9px] text-white/90 block truncate leading-tight">
-                        {file.fileName}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ImageGrid
+                files={visibleFiles}
+                categories={categories}
+                slotSelected={Boolean(selectedSlot)}
+                selected={selectedFiles}
+                saving={saving}
+                onCardClick={handleCardClick}
+                onToggleSelected={(cdnUrl) =>
+                  setSelectedFiles((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(cdnUrl)) next.delete(cdnUrl);
+                    else next.add(cdnUrl);
+                    return next;
+                  })
+                }
+                onToggleFeatured={handleToggleFeatured}
+                onMove={setMoveTarget}
+              />
             )}
           </div>
         </div>
       </div>
 
-      {/* New Category Modal */}
       {newCatOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setNewCatOpen(false)}
-        >
-          <div
-            className="bg-background border border-border rounded-xl shadow-2xl p-6 w-full max-w-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold text-foreground mb-1">
-              Add New Category
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              Creates a new upload folder and gallery slot group.
-            </p>
-            <input
-              autoFocus
-              type="text"
-              value={newCatLabel}
-              onChange={(e) => {
-                setNewCatLabel(e.target.value);
-                setNewCatError("");
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
-              placeholder="e.g. Patios, Retaining Walls"
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary mb-1"
-            />
-            {newCatError && (
-              <p className="text-xs text-destructive mb-2">{newCatError}</p>
-            )}
-            <div className="flex gap-2 justify-end mt-4">
-              <button
-                onClick={() => setNewCatOpen(false)}
-                className="px-4 py-2 text-xs border border-border rounded-lg hover:bg-muted transition-colors text-muted-foreground"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddCategory}
-                disabled={!newCatLabel.trim() || newCatLoading}
-                className="px-4 py-2 text-xs bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
-              >
-                {newCatLoading ? "Adding..." : "Add Category"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <NewCategoryDialog
+          onClose={() => setNewCatOpen(false)}
+          onSubmit={async (label) => {
+            const { error: addError } = await addCategory(label);
+            return addError;
+          }}
+        />
       )}
-      {/* Move to Category Modal */}
+
       {moveTarget && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => !moveLoading && setMoveTarget(null)}
-        >
-          <div
-            className="bg-background border border-border rounded-xl shadow-2xl p-6 w-full max-w-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-14 h-14 rounded overflow-hidden border border-border flex-shrink-0">
-                <img
-                  src={moveTarget.cdnUrl}
-                  alt={moveTarget.fileName}
-                  className="w-full h-full object-cover"
-                  crossOrigin="anonymous"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Move to Category
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {moveTarget.fileName}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Currently in:{" "}
-                  <span className="font-medium text-foreground">
-                    {moveTarget.folder || "root"}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <p className="text-xs text-muted-foreground mb-3">
-              Select the destination category:
-            </p>
-
-            <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto">
-              {categories
-                .filter((c) => c.value !== moveTarget.folder)
-                .map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => handleMoveFile(cat.value)}
-                    disabled={moveLoading}
-                    className="flex items-center gap-2 px-3 py-2 text-xs rounded-lg border border-border hover:border-primary hover:bg-primary/5 hover:text-primary transition-colors text-left disabled:opacity-50"
-                  >
-                    <FolderInput className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{cat.label}</span>
-                  </button>
-                ))}
-            </div>
-
-            {moveError && (
-              <p className="text-xs text-destructive mt-3">{moveError}</p>
-            )}
-
-            <div className="flex justify-between items-center mt-4">
-              {moveLoading && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  Moving file...
-                </div>
-              )}
-              <div className="flex-1" />
-              <button
-                onClick={() => setMoveTarget(null)}
-                disabled={moveLoading}
-                className="px-4 py-2 text-xs border border-border rounded-lg hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <MoveImageDialog
+          file={moveTarget}
+          categories={categories}
+          onClose={() => setMoveTarget(null)}
+          onMove={handleMove}
+        />
       )}
-
     </AdminLayout>
   );
 };

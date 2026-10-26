@@ -1,0 +1,4 @@
+-- TEMPORARY verification data: mark 14 existing photos as featured so the home page gallery
+-- can be checked end to end. Reverted to false right after the check.
+UPDATE media_files SET featured_home = true
+WHERE id IN (SELECT id FROM media_files WHERE folder IN ('commercial','natural-rock') LIMIT 14);

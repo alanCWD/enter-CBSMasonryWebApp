@@ -2,10 +2,12 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, X, Copy, Check, CheckCircle,
-  AlertCircle, ImagePlus, Folder
+  AlertCircle, ImagePlus, Folder, Star
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { Switch } from "@/components/ui/switch";
 import { useCategories } from "@/hooks/useCategories";
+import { AQUAPAVE_FOLDER } from "@/lib/media";
 
 type FileStatus = "pending" | "uploading" | "done" | "error";
 
@@ -36,11 +38,24 @@ const suggestName = (file: File, category: string, index: number) => {
 const AdminUpload = () => {
   const { categories, loading: catLoading } = useCategories();
   const [category, setCategory] = useState("gallery");
+  const [featureHome, setFeatureHome] = useState(false);
+  const [lastUpload, setLastUpload] = useState<{ count: number; label: string; category: string; featured: boolean } | null>(null);
   const [files, setFiles] = useState<StagedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [allCopied, setAllCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeCategoryLabel = categories.find((c) => c.value === category)?.label ?? category;
+  const goesToAquaPave = category === AQUAPAVE_FOLDER;
+
+  const destinationText = goesToAquaPave && featureHome
+    ? `Photos land in the ${activeCategoryLabel} page gallery and the home page gallery.`
+    : goesToAquaPave
+    ? `Photos land in the ${activeCategoryLabel} page gallery.`
+    : featureHome
+    ? "Photos are added to the home page gallery straight away."
+    : "Photos are stored in the library and show on the site only once you feature them.";
 
   const stageFiles = (newFiles: File[]) => {
     const staged: StagedFile[] = newFiles.map((file, i) => ({
@@ -77,6 +92,7 @@ const AdminUpload = () => {
     const pending = files.filter((f) => f.status === "pending");
     if (!pending.length) return;
     setUploading(true);
+    setLastUpload({ count: pending.length, label: activeCategoryLabel, category, featured: featureHome });
 
     for (const staged of pending) {
       setFiles((prev) => prev.map((f) => f.id === staged.id ? { ...f, status: "uploading" } : f));
@@ -86,6 +102,7 @@ const AdminUpload = () => {
         formData.append("file", staged.file);
         formData.append("fileName", staged.editedName);
         formData.append("folder", category);
+        formData.append("featuredHome", String(featureHome));
 
         const { data, error } = await supabase.functions.invoke("bunny-upload", { body: formData });
 
@@ -165,6 +182,44 @@ const AdminUpload = () => {
             )}
           </div>
         </div>
+
+        {/* Where these photos will show up */}
+        <div className="flex items-start gap-3 rounded border border-border bg-card px-4 py-3">
+          <Star className={`w-4 h-4 flex-shrink-0 mt-0.5 ${featureHome ? "text-primary" : "text-muted-foreground"}`} />
+          <div className="flex-1 min-w-0">
+            <label htmlFor="feature-home" className="block text-sm font-medium text-foreground cursor-pointer">
+              Also show in the home page gallery
+            </label>
+            <p className="text-xs text-muted-foreground mt-0.5">{destinationText}</p>
+          </div>
+          <Switch
+            id="feature-home"
+            checked={featureHome}
+            onCheckedChange={setFeatureHome}
+            className="mt-0.5 flex-shrink-0"
+          />
+        </div>
+
+        {/* Result of the last upload */}
+        {doneCount > 0 && !uploading && lastUpload && (
+          <div className="rounded border border-primary/30 bg-primary/5 px-4 py-3 flex items-start gap-2.5">
+            <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-foreground leading-relaxed">
+              {lastUpload.count} photo{lastUpload.count !== 1 ? "s" : ""} uploaded to{" "}
+              <strong className="font-semibold">{lastUpload.label}</strong>.{" "}
+              {lastUpload.category === AQUAPAVE_FOLDER
+                ? "They are now in the AquaPave page gallery"
+                : "They are stored in the library"}
+              {lastUpload.featured
+                ? lastUpload.category === AQUAPAVE_FOLDER
+                  ? " and in the home page gallery."
+                  : " and are now in the home page gallery."
+                : lastUpload.category === AQUAPAVE_FOLDER
+                ? "."
+                : " — feature them from the Media Library to show them on the home page."}
+            </p>
+          </div>
+        )}
 
         {/* Drop zone */}
         <div
