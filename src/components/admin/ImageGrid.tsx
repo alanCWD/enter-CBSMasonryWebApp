@@ -1,18 +1,6 @@
 import { Check, CheckCircle, FolderInput, Star } from "lucide-react";
-import { pagesForFile, type MediaFileRecord } from "@/lib/media";
-import type { Category } from "@/hooks/useCategories";
-
-interface ImageGridProps {
-  files: MediaFileRecord[];
-  categories: Category[];
-  slotSelected: boolean;
-  selected: Set<string>;
-  saving: Set<string>;
-  onCardClick: (file: MediaFileRecord) => void;
-  onToggleSelected: (cdnUrl: string) => void;
-  onToggleFeatured: (file: MediaFileRecord) => void;
-  onMove: (file: MediaFileRecord) => void;
-}
+import { pagesForFile } from "@/lib/media";
+import type { MediaInventoryProps } from "./inventoryProps";
 
 const ImageGrid = ({
   files,
@@ -24,7 +12,7 @@ const ImageGrid = ({
   onToggleSelected,
   onToggleFeatured,
   onMove,
-}: ImageGridProps) => {
+}: MediaInventoryProps) => {
   const labelFor = (folder: string) =>
     categories.find((c) => c.value === folder)?.label ?? (folder || "Uncategorised");
 

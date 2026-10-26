@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Plus, RefreshCw, Star, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LayoutGrid, List, Plus, RefreshCw, Star, X } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import PageImageSlots from "@/components/admin/PageImageSlots";
 import ImageGrid from "@/components/admin/ImageGrid";
+import ImageList from "@/components/admin/ImageList";
 import MoveImageDialog from "@/components/admin/MoveImageDialog";
 import NewCategoryDialog from "@/components/admin/NewCategoryDialog";
+import type { MediaInventoryProps } from "@/components/admin/inventoryProps";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
 import { useMediaSlots } from "@/hooks/useMediaSlots";
@@ -12,12 +14,18 @@ import { useMediaFiles } from "@/hooks/useMediaFiles";
 import { SINGLE_IMAGE_SLOTS, type MediaFileRecord } from "@/lib/media";
 
 const FEATURED_FILTER = "featured";
+const VIEW_STORAGE_KEY = "cbs-media-library-view";
+
+type InventoryView = "grid" | "list";
 
 const MediaLibrary = () => {
   const { categories, loading: catLoading, addCategory } = useCategories();
   const { slots, assignSlot, clearSlot, refetch: refetchSlots } = useMediaSlots();
   const { files, loading, error, reload, setFeatured, applyMove } = useMediaFiles();
 
+  const [view, setView] = useState<InventoryView>(() =>
+    localStorage.getItem(VIEW_STORAGE_KEY) === "list" ? "list" : "grid"
+  );
   const [filter, setFilter] = useState<string>("all");
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -28,6 +36,10 @@ const MediaLibrary = () => {
   const [newCatOpen, setNewCatOpen] = useState(false);
 
   const featuredCount = files.filter((f) => f.featuredHome).length;
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_STORAGE_KEY, view);
+  }, [view]);
 
   const visibleFiles = files.filter((file) => {
     if (filter === "all") return true;
@@ -108,6 +120,24 @@ const MediaLibrary = () => {
   const selectedOnHome = files.filter((f) => selectedFiles.has(f.cdnUrl) && f.featuredHome).length;
   const selectedOffHome = selectedFiles.size - selectedOnHome;
 
+  const inventoryProps: MediaInventoryProps = {
+    files: visibleFiles,
+    categories,
+    slotSelected: Boolean(selectedSlot),
+    selected: selectedFiles,
+    saving,
+    onCardClick: handleCardClick,
+    onToggleSelected: (cdnUrl: string) =>
+      setSelectedFiles((prev) => {
+        const next = new Set(prev);
+        if (next.has(cdnUrl)) next.delete(cdnUrl);
+        else next.add(cdnUrl);
+        return next;
+      }),
+    onToggleFeatured: handleToggleFeatured,
+    onMove: setMoveTarget,
+  };
+
   return (
     <AdminLayout>
       <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-56px)] lg:overflow-hidden">
@@ -179,6 +209,34 @@ const MediaLibrary = () => {
             <span className="text-[11px] text-muted-foreground whitespace-nowrap px-1">
               {files.length} photo{files.length !== 1 ? "s" : ""} · {featuredCount} on home
             </span>
+
+            {/* View switch: thumbnails or one line per photo */}
+            <div className="flex items-center rounded border border-border overflow-hidden">
+              <button
+                onClick={() => setView("grid")}
+                title="Thumbnail view"
+                aria-pressed={view === "grid"}
+                className={`px-2 py-1.5 transition-colors ${
+                  view === "grid"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setView("list")}
+                title="Line item list"
+                aria-pressed={view === "list"}
+                className={`px-2 py-1.5 border-l border-border transition-colors ${
+                  view === "list"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
             <button
               onClick={handleRefresh}
@@ -292,25 +350,10 @@ const MediaLibrary = () => {
                   Upload photos from the Upload tab to add them to a category.
                 </p>
               </div>
+            ) : view === "list" ? (
+              <ImageList {...inventoryProps} />
             ) : (
-              <ImageGrid
-                files={visibleFiles}
-                categories={categories}
-                slotSelected={Boolean(selectedSlot)}
-                selected={selectedFiles}
-                saving={saving}
-                onCardClick={handleCardClick}
-                onToggleSelected={(cdnUrl) =>
-                  setSelectedFiles((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(cdnUrl)) next.delete(cdnUrl);
-                    else next.add(cdnUrl);
-                    return next;
-                  })
-                }
-                onToggleFeatured={handleToggleFeatured}
-                onMove={setMoveTarget}
-              />
+              <ImageGrid {...inventoryProps} />
             )}
           </div>
         </div>
