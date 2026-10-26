@@ -1,0 +1,8 @@
+-- The admin area is open at this stage (no sign-in), so browsers without a session must be
+-- able to run the media actions. Adding permissive policies alongside the existing ones;
+-- nothing is dropped and no rows are touched.
+
+CREATE POLICY "open_write_slots" ON media_slots FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "open_insert_files" ON media_files FOR INSERT WITH CHECK (true);
+CREATE POLICY "open_update_files" ON media_files FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "open_insert_categories" ON media_categories FOR INSERT WITH CHECK (true);

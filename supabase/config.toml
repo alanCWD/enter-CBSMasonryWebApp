@@ -1,1 +1,12 @@
 project_id = "spb-t4n7901pv4c19ic6"
+
+# The admin area is intentionally open at this stage, so the media functions have to
+# accept requests that do not carry a signed-in user.
+[functions.bunny-upload]
+verify_jwt = false
+
+[functions.bunny-list]
+verify_jwt = false
+
+[functions.bunny-move]
+verify_jwt = false

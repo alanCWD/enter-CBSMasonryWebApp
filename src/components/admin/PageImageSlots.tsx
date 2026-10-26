@@ -24,7 +24,7 @@ const PageImageSlots = ({ slots, selectedSlot, onSelect, onClear }: PageImageSlo
       )}
     </div>
 
-    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+    <div className="lg:flex-1 lg:overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
       {SINGLE_IMAGE_SLOTS.map((slot) => {
         const assigned = slots[slot.key];
         const isSelected = selectedSlot === slot.key;

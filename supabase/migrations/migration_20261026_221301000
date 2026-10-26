@@ -1,0 +1,3 @@
+-- The open admin needs to update any photo, and this platform only lets a visitor update rows it
+-- can also read, so the library list has to be readable too. Nothing is dropped and no rows change.
+CREATE POLICY "open_read_files" ON media_files FOR SELECT USING (true);

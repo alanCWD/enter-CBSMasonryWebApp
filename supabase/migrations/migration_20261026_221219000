@@ -1,0 +1,2 @@
+-- temporary: make one row visible to anonymous visitors so the update path can be observed clearly
+UPDATE media_files SET featured_home = true WHERE id = '4be3b014-ac53-4e33-9e90-8d688268e21d';

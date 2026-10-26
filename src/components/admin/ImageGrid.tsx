@@ -38,7 +38,7 @@ const ImageGrid = ({
         return (
           <div
             key={file.cdnUrl}
-            className={`group rounded-lg border bg-background overflow-hidden transition-all ${
+            className={`group rounded-lg border bg-background overflow-hidden transition-all [content-visibility:auto] [contain-intrinsic-size:180px_240px] ${
               isSelected
                 ? "border-primary ring-2 ring-primary/25"
                 : "border-border"
@@ -55,6 +55,7 @@ const ImageGrid = ({
                 className="w-full h-full object-cover"
                 crossOrigin="anonymous"
                 loading="lazy"
+                decoding="async"
               />
 
               {/* Multi-select */}

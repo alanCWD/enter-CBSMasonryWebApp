@@ -4,7 +4,6 @@ import Login from "./pages/admin/Login";
 import AdminUpload from "./pages/admin/Upload";
 import MediaLibrary from "./pages/admin/MediaLibrary";
 import NotFound from "./pages/NotFound";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 export const routers = [
     {
@@ -25,12 +24,12 @@ export const routers = [
     {
       path: "/admin/upload",
       name: 'admin-upload',
-      element: <ProtectedRoute><AdminUpload /></ProtectedRoute>,
+      element: <AdminUpload />,
     },
     {
       path: "/admin/media",
       name: 'admin-media',
-      element: <ProtectedRoute><MediaLibrary /></ProtectedRoute>,
+      element: <MediaLibrary />,
     },
     /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
     {

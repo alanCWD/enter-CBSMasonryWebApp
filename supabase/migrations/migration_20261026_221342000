@@ -1,0 +1,7 @@
+-- Cleanup of my own verification artifacts only:
+-- 1. the probe category row created by the anonymous-write test
+-- 2. the probe text written into the AquaPave hero slot during the same test
+-- 3. the featured flags set during that test (no photo was featured before it)
+DELETE FROM media_categories WHERE value = 'zz-open-write-test';
+UPDATE media_slots SET alt_text = NULL WHERE slot_key = 'aquapave-hero' AND alt_text = 'open-write-probe';
+UPDATE media_files SET featured_home = false WHERE featured_home = true;

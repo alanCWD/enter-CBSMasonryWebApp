@@ -55,14 +55,18 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         </nav>
 
         <div className="flex-1" />
-        <span className="text-xs text-muted-foreground hidden sm:block">{user?.email}</span>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border border-border rounded hover:bg-muted"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Sign Out
-        </button>
+        {user && (
+          <>
+            <span className="text-xs text-muted-foreground hidden sm:block">{user.email}</span>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border border-border rounded hover:bg-muted"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </>
+        )}
       </header>
 
       {children}
